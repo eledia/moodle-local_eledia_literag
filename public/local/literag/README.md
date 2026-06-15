@@ -82,9 +82,9 @@ public/local/literag/
   and an API key.
 - `$CFG->slasharguments` enabled (default) so the ingestion URL can use
   `…/ingest.php/documents/upsert`.
-- Optional: a `pdftotext` binary if you need PDF resources to be searchable
-  (Moodle core has no PDF text-extraction API). Without it, PDFs are stored but
-  not indexed.
+- PDF resources are searchable out of the box via the bundled pure-PHP parser
+  (see [PDF support](#pdf-support)); a native `pdftotext` binary is **optional**
+  for higher-fidelity extraction.
 
 ## Installation
 
@@ -140,6 +140,30 @@ Retrieval pipeline: *question → keyword normalisation → DB full-text (top ~2
 per-user permission filter → optional LLM rerank → top ~5 → grounded LLM answer*.
 When the tutor sends `rag_enabled: false`, retrieval is skipped (LLM-only mode).
 
+## PDF support
+
+PDF resources are extracted to text and chunked **out of the box** — the plugin
+bundles the pure-PHP [`smalot/pdfparser`](https://github.com/smalot/pdfparser)
+library (no external binary, works on every platform). Nothing to install.
+
+For higher-fidelity extraction on complex PDFs you may optionally use a native
+**Poppler `pdftotext`** binary. Install it and set its absolute path in
+**Site administration ▸ Plugins ▸ Local plugins ▸ LiteRAG ▸ pdftotext path**
+(or Moodle's `$CFG->pathtopdftotext`); when present it is used first, with the
+bundled parser as the fallback.
+
+| Environment | Install command |
+|---|---|
+| Docker (the `moodlehq/moodle-php-apache` image, Debian) | `apt-get update && apt-get install -y poppler-utils` → binary at `/usr/bin/pdftotext` |
+| Debian / Ubuntu | `sudo apt-get install poppler-utils` |
+| RHEL / Rocky / Alma | `sudo dnf install poppler-utils` |
+| macOS (Homebrew) | `brew install poppler` → `/opt/homebrew/bin/pdftotext` (Apple Silicon) or `/usr/local/bin/pdftotext` |
+| Windows | Install the Poppler build and point the setting at `pdftotext.exe` |
+
+In Docker, add the install line to your image (e.g. a `Dockerfile` layer) so it
+survives container rebuilds. `shell_exec` must be enabled for the native path;
+otherwise the bundled PHP parser is used automatically.
+
 ## Data model
 
 `local_literag_sources`, `local_literag_chunks` (the searchable corpus),
@@ -182,9 +206,18 @@ the other eLeDia plugins. It is parametrised by `PLUGIN_PATH`/`PLUGIN_NAME`; set
 the GitLab project's *CI/CD configuration file* to
 `public/local/literag/.gitlab-ci.yml`.
 
+## Third-party libraries
+
+Bundled under `vendor/` and declared in `thirdpartylibs.xml`:
+
+- [`smalot/pdfparser`](https://github.com/smalot/pdfparser) 2.12.5 (LGPL-3.0) —
+  pure-PHP PDF text extraction. Loaded via a small shipped autoloader
+  (`vendor/smalot/pdfparser/autoload.php`); no Composer required.
+
 ## Roadmap / known limitations
 
-- PDF indexing requires an external `pdftotext` binary.
+- Complex/scanned PDFs extract best with an optional native `pdftotext`
+  (see [PDF support](#pdf-support)); image-only PDFs need OCR (not included).
 - Answers on resumed conversations show citations as an inline Markdown list
   (the tutor block's history contract carries no structured sources); live turns
   use the block's native source cards.

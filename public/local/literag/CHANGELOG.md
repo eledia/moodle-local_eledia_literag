@@ -5,6 +5,20 @@ All notable changes to the **local_literag** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-06-15
+
+### Added
+- **PDF text extraction out of the box**: bundles the pure-PHP
+  [`smalot/pdfparser`](https://github.com/smalot/pdfparser) library (LGPL-3.0,
+  declared in `thirdpartylibs.xml`), so ingested PDF resources are chunked and
+  searchable on every platform with no external binary and no install step.
+
+### Changed
+- The `pdftotext` path is now an **optional** higher-fidelity override: when a
+  native Poppler `pdftotext` binary is configured it is used first, otherwise the
+  bundled PHP parser handles extraction. A README install guide covers adding
+  `poppler-utils` for sites that want the native path.
+
 ## [0.1.0] - 2026-06-15
 
 ### Added

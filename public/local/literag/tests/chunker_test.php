@@ -92,13 +92,32 @@ final class chunker_test extends \advanced_testcase {
     }
 
     /**
-     * PDF without a configured pdftotext binary yields null (caller skips it).
+     * A real PDF is extracted by the bundled pure-PHP parser, with no native
+     * pdftotext binary configured.
      */
-    public function test_extract_pdf_without_binary_is_null(): void {
+    public function test_extract_pdf_with_bundled_parser(): void {
         $this->resetAfterTest();
         set_config('pdftotext_path', '', 'local_literag');
         $chunker = new chunker(1000, 100);
-        $this->assertNull($chunker->extract_text('%PDF-1.4 fake', 'application/pdf'));
+        $bytes = file_get_contents(__DIR__ . '/fixtures/sample.pdf');
+
+        $text = $chunker->extract_text($bytes, 'application/pdf');
+
+        $this->assertNotNull($text);
+        $this->assertStringContainsStringIgnoringCase('Photosynthesis', $text);
+        $this->assertStringContainsStringIgnoringCase('glucose', $text);
+    }
+
+    /**
+     * An unparseable PDF yields null so the caller records the source as skipped.
+     */
+    public function test_extract_pdf_invalid_is_null(): void {
+        $this->resetAfterTest();
+        set_config('pdftotext_path', '', 'local_literag');
+        $chunker = new chunker(1000, 100);
+        $this->assertNull($chunker->extract_text('%PDF-1.4 not a real pdf', 'application/pdf'));
+        // The parser logs the failure at developer level; consume that message.
+        $this->assertDebuggingCalled();
     }
 
     /**

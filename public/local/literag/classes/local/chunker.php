@@ -185,32 +185,54 @@ class chunker {
     }
 
     /**
-     * Extract text from PDF bytes using an external pdftotext binary.
+     * Extract text from PDF bytes.
      *
-     * Core Moodle has no PDF text-extraction API (its pdflib is TCPDF, which only
-     * generates PDFs), so this shells out to pdftotext when configured. Returns
-     * null when no binary is available — the caller records the source as skipped.
+     * Core Moodle has no PDF text-extraction API, so extraction is done by the
+     * bundled pure-PHP smalot/pdfparser library — PDFs are searchable out of the
+     * box on any platform. A site that configures a native pdftotext binary gets
+     * that higher-fidelity path first; the PHP parser is the fallback. Returns
+     * null only when neither path can extract text (the caller then records the
+     * source as skipped).
      *
      * @param string $pdfbytes Raw PDF content.
-     * @return string|null Extracted text, or null when extraction is unavailable.
+     * @return string|null Extracted text, or null when extraction is not possible.
      */
     private function extract_pdf(string $pdfbytes): ?string {
-        $bin = config::pdftotext_path();
-        if ($bin === '' || !is_executable($bin)) {
-            return null;
-        }
-
         $dir = make_request_directory();
         $tmp = $dir . '/in.pdf';
         if (file_put_contents($tmp, $pdfbytes) === false) {
             return null;
         }
 
-        $cmd = escapeshellarg($bin) . ' -enc UTF-8 -q ' . escapeshellarg($tmp) . ' -';
-        $output = shell_exec($cmd);
-        if ($output === null || trim($output) === '') {
+        // Prefer a configured native pdftotext binary (best fidelity).
+        $bin = config::pdftotext_path();
+        if ($bin !== '' && is_executable($bin)) {
+            $cmd = escapeshellarg($bin) . ' -enc UTF-8 -q ' . escapeshellarg($tmp) . ' -';
+            $output = shell_exec($cmd);
+            if (is_string($output) && trim($output) !== '') {
+                return $output;
+            }
+        }
+
+        // Pure-PHP fallback (bundled smalot/pdfparser), works everywhere.
+        return $this->extract_pdf_php($tmp);
+    }
+
+    /**
+     * Extract text from a PDF file using the bundled pure-PHP parser.
+     *
+     * @param string $path Path to the PDF file.
+     * @return string|null Extracted text, or null on failure.
+     */
+    private function extract_pdf_php(string $path): ?string {
+        require_once(__DIR__ . '/../../vendor/smalot/pdfparser/autoload.php');
+        try {
+            $parser = new \Smalot\PdfParser\Parser();
+            $text = $parser->parseFile($path)->getText();
+        } catch (\Throwable $e) {
+            debugging('local_literag: PDF text extraction failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return null;
         }
-        return $output;
+        return trim($text) === '' ? null : $text;
     }
 }
