@@ -116,7 +116,6 @@ $string['rerank_model'] = 'Rerank model';
 $string['rerank_model_desc'] = 'Model used for reranking; leave empty to reuse the answer model.';
 $string['retrieval_candidates'] = 'Candidate chunks';
 $string['retrieval_candidates_desc'] = 'How many chunks the full-text search returns before permission filtering.';
-$string['sources_label'] = 'Sources';
 $string['task_prune_logs'] = 'Prune LiteRAG logs and expired conversations';
 $string['transport_auth_token'] = 'Tutor transport token (optional)';
 $string['transport_auth_token_desc'] = 'Optional bearer token the tutor block must present (defence in depth). '

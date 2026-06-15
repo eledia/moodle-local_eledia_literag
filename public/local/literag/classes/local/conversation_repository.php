@@ -97,6 +97,7 @@ class conversation_repository {
      * @param string $content Message text.
      * @param string|null $topic Canonical topic label.
      * @param int $primarycmid Primary source cmid for analytics.
+     * @param array|null $sources Source rows ({title,url,snippet}) for an assistant message.
      * @return void
      */
     public function add_message(
@@ -104,7 +105,8 @@ class conversation_repository {
         string $role,
         string $content,
         ?string $topic = null,
-        int $primarycmid = 0
+        int $primarycmid = 0,
+        ?array $sources = null
     ): void {
         global $DB;
         $DB->insert_record('local_literag_messages', (object) [
@@ -112,6 +114,7 @@ class conversation_repository {
             'userid' => $conversation->userid,
             'role' => $role === 'user' ? 'user' : 'assistant',
             'content' => $content,
+            'sourcesjson' => empty($sources) ? null : json_encode(array_values($sources)),
             'topic' => $topic,
             'primarycmid' => $primarycmid,
             'timecreated' => time(),
@@ -119,7 +122,7 @@ class conversation_repository {
     }
 
     /**
-     * Load recent messages of a conversation as [{role, content}, ...], oldest first.
+     * Load recent messages of a conversation as [{role, content, sources}, ...], oldest first.
      *
      * @param \stdClass $conversation
      * @param int|null $limit Maximum messages (defaults to the history window).
@@ -132,14 +135,21 @@ class conversation_repository {
             'local_literag_messages',
             ['conversationid' => $conversation->id],
             'timecreated DESC, id DESC',
-            'id, role, content',
+            'id, role, content, sourcesjson',
             0,
             $limit
         );
         $rows = array_reverse($rows);
         $messages = [];
         foreach ($rows as $row) {
-            $messages[] = ['role' => $row->role, 'content' => (string) $row->content];
+            $sources = [];
+            if (!empty($row->sourcesjson)) {
+                $decoded = json_decode($row->sourcesjson, true);
+                if (is_array($decoded)) {
+                    $sources = $decoded;
+                }
+            }
+            $messages[] = ['role' => $row->role, 'content' => (string) $row->content, 'sources' => $sources];
         }
         return $messages;
     }

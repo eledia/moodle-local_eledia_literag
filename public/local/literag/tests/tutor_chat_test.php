@@ -176,8 +176,9 @@ final class tutor_chat_test extends \advanced_testcase {
     }
 
     /**
-     * Citations survive a history reload: the stored transcript carries a sources
-     * footer (the tutor block's history path drops the structured sources array).
+     * Citations survive a history reload as STRUCTURED sources: the stored answer
+     * stays clean (no inline footer) and tutor_get_history returns the same
+     * {title,url,snippet} sources the block renders as cards.
      */
     public function test_resumed_history_carries_sources(): void {
         global $CFG;
@@ -197,22 +198,24 @@ final class tutor_chat_test extends \advanced_testcase {
             'system_url' => $CFG->wwwroot, 'moodle_token' => $token,
             'user_message' => 'How does photosynthesis work?', 'course_id' => (string) $course->id,
         ]);
-        // The live answer stays clean (native source cards come from structuredContent).
-        $this->assertStringNotContainsString('Sources', $result['structuredContent']['answer']);
         $this->assertNotEmpty($result['structuredContent']['sources']);
 
-        // Reloading history (what the block does after a refresh) must still expose the source.
+        // Reloading history (what the block does after a refresh) returns the same
+        // structured sources, and the stored answer carries no inline footer.
         $history = (new \local_literag\local\mcp\tools\tutor_get_history())->handle([
             'system_url' => $CFG->wwwroot, 'moodle_token' => $token,
             'conversation_id' => $result['structuredContent']['conversation_id'],
         ]);
-        $assistant = '';
+        $assistant = null;
         foreach ($history['structuredContent']['messages'] as $m) {
             if ($m['role'] === 'assistant') {
-                $assistant = $m['content'];
+                $assistant = $m;
             }
         }
-        $this->assertStringContainsString($url, $assistant);
+        $this->assertNotNull($assistant);
+        $this->assertStringNotContainsStringIgnoringCase('Sources', $assistant['content']);
+        $this->assertNotEmpty($assistant['sources']);
+        $this->assertSame($url, $assistant['sources'][0]['url']);
     }
 
     /**

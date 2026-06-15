@@ -162,17 +162,10 @@ class tutor_chat implements tool {
         $primarytitle = !empty($contextchunks) ? (string) $contextchunks[0]->sourcetitle : null;
         $topic = (new topic_registry())->classify($courseid, $primarytitle);
 
-        // Persist the answer with a markdown sources footer so citations survive a
-        // history reload. The tutor block's history path only carries the message
-        // text (no structured sources), so live turns keep the native source cards
-        // via structuredContent below, while resumed turns render this footer.
-        $this->repo->add_message(
-            $conversation,
-            'assistant',
-            $answer . $this->sources_footer($sources),
-            $topic,
-            $primarycmid
-        );
+        // Persist the clean answer plus its structured sources, so tutor_get_history
+        // can return the same citations and the block renders identical source cards
+        // on resume (see rag_server_spec.md A.2).
+        $this->repo->add_message($conversation, 'assistant', $answer, $topic, $primarycmid, $sources);
         $this->repo->touch($conversation, (string) $answerstyle);
 
         $this->log_query($userid, $courseid, $message, $numcandidates, count($contextchunks));
@@ -189,40 +182,6 @@ class tutor_chat implements tool {
         }
 
         return result::tool($answer, $structured, false);
-    }
-
-    /**
-     * Build a markdown "Sources" footer for a stored transcript.
-     *
-     * Returns '' when there are no sources. The footer is appended only to the
-     * persisted assistant message (not the live structuredContent.answer), so the
-     * citations reappear when the tutor block reloads the conversation history.
-     *
-     * @param array $sources Source rows ({title, url, snippet}).
-     * @return string Markdown footer, or '' when empty.
-     */
-    private function sources_footer(array $sources): string {
-        if (empty($sources)) {
-            return '';
-        }
-        $lines = ['', '', '**' . get_string('sources_label', 'local_literag') . '**'];
-        $seen = [];
-        foreach ($sources as $s) {
-            $title = trim((string) ($s['title'] ?? ''));
-            $url = trim((string) ($s['url'] ?? ''));
-            $label = $title !== '' ? $title : ($url !== '' ? $url : '');
-            if ($label === '') {
-                continue;
-            }
-            // De-duplicate repeated chunks from the same source.
-            $key = $url !== '' ? $url : $label;
-            if (isset($seen[$key])) {
-                continue;
-            }
-            $seen[$key] = true;
-            $lines[] = $url !== '' ? "- [{$label}]({$url})" : "- {$label}";
-        }
-        return count($lines) > 3 ? implode("\n", $lines) : '';
     }
 
     /**

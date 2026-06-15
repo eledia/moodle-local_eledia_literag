@@ -5,6 +5,19 @@ All notable changes to the **local_literag** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-06-15
+
+### Added
+- **Structured sources on resumed conversations**: `tutor_get_history` now
+  returns each assistant message's `sources` (`{title, url, snippet}`), so the
+  tutor block renders the same citation cards on resume as for live answers
+  (requires `block_elediaaitutor` ≥ 0.14.0). New nullable `sourcesjson` column on
+  `local_literag_messages`.
+
+### Changed
+- Dropped the markdown "Sources" footer that was baked into stored answers as a
+  stopgap; sources now travel as structured data.
+
 ## [0.2.0] - 2026-06-15
 
 ### Added

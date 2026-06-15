@@ -29,8 +29,19 @@
  * @return bool
  */
 function xmldb_local_literag_upgrade($oldversion) {
-    // No schema changes yet beyond the initial install. The raw full-text index
-    // creation lives in {@see \local_literag\local\schema} and is re-applied
-    // here whenever the chunks table structure changes in a future step.
+    global $DB;
+    $dbman = $DB->get_manager();
+
+    if ($oldversion < 2026061700) {
+        // Per-message structured sources, so resumed conversations can carry the
+        // same citation cards as live answers (no more inline footer hack).
+        $table = new xmldb_table('local_literag_messages');
+        $field = new xmldb_field('sourcesjson', XMLDB_TYPE_TEXT, null, null, null, null, null, 'content');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026061700, 'local', 'literag');
+    }
+
     return true;
 }

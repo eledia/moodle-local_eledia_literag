@@ -218,9 +218,6 @@ Bundled under `vendor/` and declared in `thirdpartylibs.xml`:
 
 - Complex/scanned PDFs extract best with an optional native `pdftotext`
   (see [PDF support](#pdf-support)); image-only PDFs need OCR (not included).
-- Answers on resumed conversations show citations as an inline Markdown list
-  (the tutor block's history contract carries no structured sources); live turns
-  use the block's native source cards.
 - Optional: bridge to the live `moodle_*` MCP tools for non-ingested data.
 
 ## License
