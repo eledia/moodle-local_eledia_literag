@@ -30,6 +30,7 @@ $string['chunk_overlap'] = 'Chunk overlap (characters)';
 $string['chunk_overlap_desc'] = 'Overlap between consecutive chunks to preserve context across boundaries.';
 $string['chunk_size'] = 'Chunk size (characters)';
 $string['chunk_size_desc'] = 'Target size of each stored text chunk.';
+$string['confirm_sent'] = 'Done — your message was sent.';
 $string['context_chunks'] = 'Context chunks';
 $string['context_chunks_desc'] = 'How many chunks to feed the LLM as grounding context (also the citation count).';
 $string['conversation_retention_days'] = 'Conversation retention (days)';
@@ -46,6 +47,8 @@ $string['enable_memory'] = 'Enable long-term memory';
 $string['enable_memory_desc'] = 'Allow opt-in long-term memory. Off by default; every read/write is gated on per-request consent.';
 $string['enable_rerank'] = 'Enable LLM reranking';
 $string['enable_rerank_desc'] = 'Optionally ask the LLM to reorder candidates before answering (extra latency and cost).';
+$string['enable_write_tools'] = 'Allow sending messages';
+$string['enable_write_tools_desc'] = 'Off by default. When on (and live tools are enabled), the tutor may send Moodle messages on the learner\'s behalf — but only after previewing the message and getting an explicit in-chat confirmation. Sends honour the learner\'s own permissions.';
 $string['endpointinfo'] = 'Endpoint URLs';
 $string['endpointinfo_desc'] = 'Configure the existing plugins to point here:<ul>'
     . '<li><strong>local_ragingest</strong> &rarr; ingestion endpoint URL: <code>{$a->upsert}</code></li>'

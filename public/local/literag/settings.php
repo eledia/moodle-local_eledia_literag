@@ -196,6 +196,10 @@ if ($hassiteconfig) {
         get_string('enable_mcp_tools', 'local_literag'),
         get_string('enable_mcp_tools_desc', 'local_literag'), 1));
 
+    $settings->add(new admin_setting_configcheckbox('local_literag/enable_write_tools',
+        get_string('enable_write_tools', 'local_literag'),
+        get_string('enable_write_tools_desc', 'local_literag'), 0));
+
     $settings->add(new admin_setting_configtext('local_literag/max_tool_iterations',
         get_string('max_tool_iterations', 'local_literag'),
         get_string('max_tool_iterations_desc', 'local_literag'), 4, PARAM_INT));

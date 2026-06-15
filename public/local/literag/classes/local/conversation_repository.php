@@ -90,6 +90,34 @@ class conversation_repository {
     }
 
     /**
+     * Store (or clear) the conversation's pending write action awaiting confirmation.
+     *
+     * @param \stdClass $conversation
+     * @param array|null $action The action to persist as JSON, or null to clear.
+     * @return void
+     */
+    public function set_pending_action(\stdClass $conversation, ?array $action): void {
+        global $DB;
+        $json = $action === null ? null : json_encode($action, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $DB->set_field('local_literag_conversations', 'pendingaction', $json, ['id' => $conversation->id]);
+        $conversation->pendingaction = $json;
+    }
+
+    /**
+     * Get the conversation's pending write action, or null when none is set.
+     *
+     * @param \stdClass $conversation
+     * @return array|null
+     */
+    public function get_pending_action(\stdClass $conversation): ?array {
+        if (empty($conversation->pendingaction)) {
+            return null;
+        }
+        $decoded = json_decode((string) $conversation->pendingaction, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
      * Append a message to a conversation.
      *
      * @param \stdClass $conversation

@@ -18,8 +18,10 @@ declare(strict_types=1);
 
 namespace local_literag;
 
+use local_literag\local\conversation_repository;
 use local_literag\local\http\transport;
 use local_literag\local\llm\client;
+use local_literag\local\mcp\moodle_client;
 use local_literag\local\mcp\tools\tutor_chat;
 use local_literag\local\tenant;
 
@@ -293,5 +295,114 @@ final class tutor_chat_test extends \advanced_testcase {
             'moodle_token' => 'invalid-token',
             'user_message' => 'Hello',
         ]);
+    }
+
+    /**
+     * A transport that always replies with one JSON body and records request bodies.
+     *
+     * @param string $body Response body.
+     * @return transport
+     */
+    private function fake_json_transport(string $body): transport {
+        return new class ($body) implements transport {
+            /** @var string Canned response body. */
+            private string $body;
+            /** @var string[] Captured request bodies. */
+            public array $bodies = [];
+            /**
+             * Constructor.
+             *
+             * @param string $body Canned response body.
+             */
+            public function __construct(string $body) {
+                $this->body = $body;
+            }
+            /**
+             * Record the request and return the canned response.
+             *
+             * @param string $url
+             * @param array $headers
+             * @param string $body
+             * @param int $timeout
+             * @return array
+             */
+            public function post(string $url, array $headers, string $body, int $timeout): array {
+                $this->bodies[] = $body;
+                return ['status' => 200, 'body' => $this->body, 'error' => ''];
+            }
+        };
+    }
+
+    /**
+     * On an explicit "yes", a pending message is actually sent (confirm=true) and cleared.
+     */
+    public function test_confirmation_sends_pending(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_write_tools', 1, 'local_literag');
+
+        $user = $this->getDataGenerator()->create_user();
+        $token = $this->mint_token((int) $user->id);
+        $repo = new conversation_repository();
+        $conv = $repo->create((int) $user->id, 0, 'explain');
+        $repo->set_pending_action($conv, ['tool' => 'moodle_send_message',
+            'arguments' => ['to_user_id' => 42, 'message' => 'I created this tutor.']]);
+
+        $sendresult = json_encode(['jsonrpc' => '2.0', 'id' => 1, 'result' => [
+            'content' => [['type' => 'text', 'text' => 'sent']],
+            'structuredContent' => ['sent' => true, 'recipient' => ['id' => 42, 'fullname' => 'Erika'],
+                'message_id' => 99, 'summary' => 'Message sent to Erika (id 42).'],
+            'isError' => false,
+        ]]);
+        $mcpt = $this->fake_json_transport($sendresult);
+        $handler = new tutor_chat(
+            new client($this->fake_llm('Done — I let Erika know.')),
+            null,
+            new moodle_client('https://x', $token, $mcpt)
+        );
+
+        $result = $handler->handle(['system_url' => $CFG->wwwroot, 'moodle_token' => $token,
+            'user_message' => 'yes', 'conversation_id' => $conv->convkey]);
+
+        $this->assertFalse($result['isError']);
+        $this->assertSame('Done — I let Erika know.', $result['structuredContent']['answer']);
+        $this->assertStringContainsString('moodle_send_message', $mcpt->bodies[0]);
+        $this->assertStringContainsString('"confirm":true', $mcpt->bodies[0]); // Sent for real.
+        $reloaded = $repo->find_owned($conv->convkey, (int) $user->id);
+        $this->assertNull($repo->get_pending_action($reloaded)); // Consumed.
+    }
+
+    /**
+     * A non-affirmative reply abandons the pending send (nothing is sent, pending cleared).
+     */
+    public function test_non_affirmative_clears_pending(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_write_tools', 1, 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag'); // Keep the fall-through a plain answer.
+
+        $user = $this->getDataGenerator()->create_user();
+        $token = $this->mint_token((int) $user->id);
+        $repo = new conversation_repository();
+        $conv = $repo->create((int) $user->id, 0, 'explain');
+        $repo->set_pending_action($conv, ['tool' => 'moodle_send_message',
+            'arguments' => ['to_user_id' => 42, 'message' => 'hi']]);
+
+        $mcpt = $this->fake_json_transport('{}');
+        $handler = new tutor_chat(
+            new client($this->fake_llm('Here is the deadline information.')),
+            null,
+            new moodle_client('https://x', $token, $mcpt)
+        );
+
+        $result = $handler->handle(['system_url' => $CFG->wwwroot, 'moodle_token' => $token,
+            'user_message' => 'actually, when is the essay due?', 'conversation_id' => $conv->convkey]);
+
+        $this->assertFalse($result['isError']);
+        $this->assertCount(0, $mcpt->bodies); // Nothing sent.
+        $reloaded = $repo->find_owned($conv->convkey, (int) $user->id);
+        $this->assertNull($repo->get_pending_action($reloaded)); // Abandoned.
     }
 }

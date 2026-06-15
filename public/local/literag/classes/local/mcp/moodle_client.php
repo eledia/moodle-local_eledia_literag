@@ -70,10 +70,13 @@ class moodle_client {
     }
 
     /**
-     * List the server's read-only tools (paginated), as OpenAI-ready descriptors.
+     * List the server's tools (paginated), as OpenAI-ready descriptors.
      *
-     * @return array<int, array{name: string, description: string, parameters: array}>
-     *               Empty when the server is unavailable or exposes no usable tools.
+     * Each descriptor carries a `readonly` flag (from the tool's readOnlyHint) so
+     * the caller can decide which to expose; write tools are never silently mixed in.
+     *
+     * @return array<int, array{name: string, description: string, parameters: array, readonly: bool}>
+     *               Empty when the server is unavailable or exposes no tools.
      */
     public function list_tools(): array {
         $tools = [];
@@ -89,23 +92,42 @@ class moodle_client {
                 if (!is_array($tool) || empty($tool['name'])) {
                     continue;
                 }
-                // Read-only tools only: never expose writes (e.g. moodle_send_message).
                 $annotations = $tool['annotations'] ?? [];
-                if (empty($annotations['readOnlyHint'])) {
-                    continue;
-                }
-                $schema = (isset($tool['inputSchema']) && is_array($tool['inputSchema']))
-                    ? $tool['inputSchema'] : ['type' => 'object'];
                 $tools[] = [
                     'name' => (string) $tool['name'],
                     'description' => (string) ($tool['description'] ?? ($tool['title'] ?? '')),
-                    'parameters' => $schema,
+                    'parameters' => self::normalize_schema($tool['inputSchema'] ?? null),
+                    'readonly' => !empty($annotations['readOnlyHint']),
                 ];
             }
             $cursor = (isset($result['nextCursor']) && is_string($result['nextCursor'])) ? $result['nextCursor'] : null;
         } while ($cursor !== null && ++$guard < 20);
 
         return $tools;
+    }
+
+    /**
+     * Coerce an MCP inputSchema into a JSON Schema object the LLM will accept.
+     *
+     * OpenAI requires a function's `parameters` to be a JSON *object*; a no-argument
+     * tool whose inputSchema is an empty (or list) array would serialise as `[]` and
+     * be rejected with `invalid_function_parameters`, so it falls back to an empty
+     * object schema. An empty `properties` map is likewise forced to `{}` not `[]`.
+     *
+     * @param mixed $schema The raw inputSchema from the tool descriptor.
+     * @return array A schema that json_encode emits as a JSON object.
+     */
+    private static function normalize_schema($schema): array {
+        if (!is_array($schema) || $schema === [] || array_is_list($schema)) {
+            return ['type' => 'object', 'properties' => new \stdClass()];
+        }
+        if (!isset($schema['type'])) {
+            $schema['type'] = 'object';
+        }
+        if (array_key_exists('properties', $schema) && $schema['properties'] === []) {
+            $schema['properties'] = new \stdClass();
+        }
+        return $schema;
     }
 
     /**

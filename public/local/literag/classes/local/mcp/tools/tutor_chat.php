@@ -20,6 +20,7 @@ namespace local_literag\local\mcp\tools;
 
 use local_literag\local\agent;
 use local_literag\local\config;
+use local_literag\local\confirmation;
 use local_literag\local\conversation_repository;
 use local_literag\local\llm\client;
 use local_literag\local\llm\llm_exception;
@@ -110,6 +111,30 @@ class tutor_chat implements tool {
 
         $history = $this->repo->recent_messages($conversation);
 
+        $systemurl = trim((string) ($arguments['system_url'] ?? ''));
+        $moodletoken = (string) ($arguments['moodle_token'] ?? '');
+
+        // Confirmation turn: a write previewed on the previous turn is sent now, and
+        // only if the learner explicitly confirmed. The pending action lives for
+        // exactly one turn — it is consumed (cleared) either way.
+        $pending = $this->repo->get_pending_action($conversation);
+        if ($pending !== null) {
+            $this->repo->set_pending_action($conversation, null);
+            if (config::enable_write_tools() && $systemurl !== '' && confirmation::is_yes($message)) {
+                $this->repo->add_message($conversation, 'user', $message);
+                return $this->confirm_pending(
+                    $conversation,
+                    $systemurl,
+                    $moodletoken,
+                    $pending,
+                    $history,
+                    $answerstyle,
+                    $userlang,
+                    $persona
+                );
+            }
+        }
+
         // Retrieval (skipped entirely in LLM-only mode).
         $contextchunks = [];
         $numcandidates = 0;
@@ -137,10 +162,11 @@ class tutor_chat implements tool {
         $this->repo->add_message($conversation, 'user', $message);
 
         // Live Moodle tools: when grounded and enabled, let the LLM call
-        // elediamcp's read-only moodle_* tools as the learner (spec Part C).
-        $systemurl = trim((string) ($arguments['system_url'] ?? ''));
-        $moodletoken = (string) ($arguments['moodle_token'] ?? '');
+        // elediamcp's tools as the learner (spec Part C). Read-only tools are always
+        // offered; write tools (e.g. moodle_send_message) only when opted in, and
+        // they are forced preview-only by the agent (sent only after confirmation).
         $tools = [];
+        $writetools = [];
         $mcp = null;
         $usersummary = null;
         if ($ragenabled && config::enable_mcp_tools() && $systemurl !== '') {
@@ -150,9 +176,16 @@ class tutor_chat implements tool {
             if (!$verify['iserror'] && is_array($verify['structured'])) {
                 $usersummary = (string) ($verify['structured']['summary'] ?? '');
             }
+            $allowwrites = config::enable_write_tools();
             foreach ($mcp->list_tools() as $tool) {
                 if ($tool['name'] === 'moodle_verify_user_context') {
                     continue; // Already called above.
+                }
+                if (!$tool['readonly'] && !$allowwrites) {
+                    continue; // Write tools only when explicitly enabled.
+                }
+                if (!$tool['readonly']) {
+                    $writetools[] = $tool['name'];
                 }
                 $tools[] = [
                     'type' => 'function',
@@ -174,12 +207,18 @@ class tutor_chat implements tool {
             $persona,
             $ragenabled,
             $usersummary,
-            !empty($tools)
+            !empty($tools),
+            !empty($writetools)
         );
 
         try {
             if (!empty($tools) && $mcp !== null) {
-                $answer = (new agent($this->client(), $mcp))->run($messages, $tools);
+                $agentrunner = new agent($this->client(), $mcp, null, null, $writetools);
+                $answer = $agentrunner->run($messages, $tools);
+                // A write previewed this turn awaits the learner's confirmation next turn.
+                if ($agentrunner->pendingaction !== null) {
+                    $this->repo->set_pending_action($conversation, $agentrunner->pendingaction);
+                }
             } else {
                 $answer = $this->client()->chat($messages);
             }
@@ -256,6 +295,58 @@ class tutor_chat implements tool {
             $chunk->sourcenum = $index[$key];
         }
         return $sources;
+    }
+
+    /**
+     * Execute a learner-confirmed pending write and return a brief confirmation.
+     *
+     * @param \stdClass $conversation
+     * @param string $systemurl
+     * @param string $moodletoken
+     * @param array $pending The stored pending action ({tool, arguments}).
+     * @param array $history Prior conversation turns for context.
+     * @param string|null $answerstyle
+     * @param string|null $userlang
+     * @param array|null $persona
+     * @return array MCP tool result.
+     */
+    private function confirm_pending(
+        \stdClass $conversation,
+        string $systemurl,
+        string $moodletoken,
+        array $pending,
+        array $history,
+        ?string $answerstyle,
+        ?string $userlang,
+        ?array $persona
+    ): array {
+        $mcp = $this->mcp ?? new moodle_client($systemurl, $moodletoken);
+        $args = is_array($pending['arguments'] ?? null) ? $pending['arguments'] : [];
+        $args['confirm'] = true;
+        $result = $mcp->call_tool((string) ($pending['tool'] ?? ''), $args);
+
+        $summary = (is_array($result['structured']) && !empty($result['structured']['summary']))
+            ? (string) $result['structured']['summary'] : '';
+        $sent = !$result['iserror'] && !empty($result['structured']['sent']);
+        if ($sent) {
+            $note = 'You have just completed the learner\'s confirmed request: '
+                . ($summary !== '' ? $summary : 'done') . '. Confirm this to the learner in one short sentence.';
+        } else {
+            $note = 'The action could not be completed' . ($summary !== '' ? ' (' . $summary . ')' : '')
+                . '. Apologise briefly and suggest trying again.';
+        }
+
+        try {
+            $answer = $this->client()->chat(
+                prompt_builder::build($note, [], $history, $answerstyle, $userlang, $persona, false)
+            );
+        } catch (llm_exception $e) {
+            $answer = $sent ? get_string('confirm_sent', 'local_literag') : get_string('error_llm', 'local_literag');
+        }
+
+        $this->repo->add_message($conversation, 'assistant', $answer, null, 0, []);
+        $this->repo->touch($conversation, (string) $answerstyle);
+        return result::tool($answer, ['answer' => $answer, 'conversation_id' => $conversation->convkey], false);
     }
 
     /**

@@ -48,6 +48,12 @@ class agent {
     /** @var int Unix timestamp after which no new tool round is started. */
     private int $deadline;
 
+    /** @var string[] Names of write tools (forced to preview-only this turn). */
+    private array $writetools;
+
+    /** @var array|null A write previewed this turn, awaiting the learner's confirmation. */
+    public ?array $pendingaction = null;
+
     /**
      * Constructor.
      *
@@ -55,12 +61,20 @@ class agent {
      * @param moodle_client $mcp elediamcp tool client.
      * @param int|null $maxiterations Maximum tool rounds (defaults to config).
      * @param int|null $deadlineseconds Wall-clock budget from now (default 25s).
+     * @param string[] $writetools Names of write tools to force preview-only.
      */
-    public function __construct(client $llm, moodle_client $mcp, ?int $maxiterations = null, ?int $deadlineseconds = null) {
+    public function __construct(
+        client $llm,
+        moodle_client $mcp,
+        ?int $maxiterations = null,
+        ?int $deadlineseconds = null,
+        array $writetools = []
+    ) {
         $this->llm = $llm;
         $this->mcp = $mcp;
         $this->maxiterations = max(1, $maxiterations ?? config::max_tool_iterations());
         $this->deadline = time() + ($deadlineseconds ?? 25);
+        $this->writetools = $writetools;
     }
 
     /**
@@ -131,7 +145,29 @@ class agent {
             }
         }
 
+        // Write tools can only ever PREVIEW within a turn: force confirm off, no
+        // matter what the model set. The real send happens only after the learner
+        // confirms on a later turn (handled by tutor_chat via the pending action).
+        $iswrite = in_array($name, $this->writetools, true);
+        if ($iswrite) {
+            $arguments['confirm'] = false;
+        }
+
         $result = $this->mcp->call_tool($name, $arguments);
+
+        // Record the previewed write, keyed on the recipient the server resolved
+        // (so the confirmed send goes exactly where the learner was shown).
+        if ($iswrite && !$result['iserror'] && is_array($result['structured'])) {
+            $structured = $result['structured'];
+            $recipientid = isset($structured['recipient']['id']) ? (int) $structured['recipient']['id'] : 0;
+            if ($recipientid > 0 && isset($arguments['message'])) {
+                $this->pendingaction = [
+                    'tool' => $name,
+                    'arguments' => ['to_user_id' => $recipientid, 'message' => (string) $arguments['message']],
+                ];
+            }
+        }
+
         if ($result['iserror']) {
             $payload = ['error' => $result['text'] !== '' ? $result['text'] : 'tool failed'];
         } else {

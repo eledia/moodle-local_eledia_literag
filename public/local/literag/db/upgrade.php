@@ -43,5 +43,16 @@ function xmldb_local_literag_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026061700, 'local', 'literag');
     }
 
+    if ($oldversion < 2026061900) {
+        // A previewed write action (e.g. a message send) awaiting the learner's
+        // explicit confirmation on the next turn.
+        $table = new xmldb_table('local_literag_conversations');
+        $field = new xmldb_field('pendingaction', XMLDB_TYPE_TEXT, null, null, null, null, null, 'lastanswerstyle');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026061900, 'local', 'literag');
+    }
+
     return true;
 }

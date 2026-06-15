@@ -54,7 +54,8 @@ class prompt_builder {
         ?array $persona,
         bool $grounded,
         ?string $usersummary = null,
-        bool $hastools = false
+        bool $hastools = false,
+        bool $haswrites = false
     ): array {
         $messages = [];
         $messages[] = ['role' => 'system', 'content' => self::system_prompt(
@@ -64,7 +65,8 @@ class prompt_builder {
             $persona,
             $grounded,
             $usersummary,
-            $hastools
+            $hastools,
+            $haswrites
         )];
 
         foreach ($history as $turn) {
@@ -98,7 +100,8 @@ class prompt_builder {
         ?array $persona,
         bool $grounded,
         ?string $usersummary = null,
-        bool $hastools = false
+        bool $hastools = false,
+        bool $haswrites = false
     ): string {
         $lines = [];
         $lines[] = 'You are a helpful tutor embedded in a Moodle course. Answer the learner clearly and accurately.';
@@ -114,6 +117,13 @@ class prompt_builder {
                 . 'assignments, due dates, grades, calendar, progress, forum posts, …). When the question concerns '
                 . 'the learner\'s own data or the current state of their courses, call the relevant tool rather than '
                 . 'guessing or relying only on the context below.';
+        }
+        if ($haswrites) {
+            $lines[] = 'To send a message you MUST call the moodle_send_message tool — never compose the preview '
+                . 'yourself. Call it with confirm left unset: the tool returns a preview WITHOUT sending. Relay that '
+                . 'preview (recipient + text) to the learner and ask them to confirm (e.g. reply "yes"); the actual '
+                . 'send happens only after they confirm. When you only know a name, pass it as to_query and the tool '
+                . 'resolves the recipient. NEVER state that a message was sent unless a tool result shows sent=true.';
         }
 
         // Persona — voice only.

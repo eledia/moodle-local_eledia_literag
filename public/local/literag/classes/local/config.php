@@ -245,6 +245,15 @@ class config {
     }
 
     /**
+     * Whether the tutor may use write tools (e.g. send messages), with confirmation.
+     *
+     * @return bool
+     */
+    public static function enable_write_tools(): bool {
+        return self::bool('enable_write_tools', false);
+    }
+
+    /**
      * Maximum tool-call rounds per answer.
      *
      * @return int

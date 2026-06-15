@@ -5,6 +5,29 @@ All notable changes to the **local_literag** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-06-15
+
+### Added
+- **Send Moodle messages (opt-in, two-step confirm)**: when `enable_write_tools`
+  is on (default **off**) the tutor may send a Moodle message on the learner's
+  behalf via elediamcp's `moodle_send_message`, but only safely: a single chat
+  turn can never send — the write tool is always forced to `confirm=false`, so it
+  only ever returns a *preview* (resolved recipient + message text), which the
+  tutor relays and asks the learner to confirm. The message is sent only after the
+  learner's explicit affirmative on the following turn (new `confirmation::is_yes`,
+  a conservative en/de yes-list), reusing the recipient id + text from the preview
+  the learner saw. Sends honour the learner's own Moodle permissions and are
+  audited server-side. New nullable `pendingaction` column on
+  `local_literag_conversations`; setting `enable_write_tools`.
+
+### Fixed
+- **Live tool-calling now actually reaches the model**: a no-argument tool's empty
+  `inputSchema` was serialised as a JSON array (`[]`) instead of an object, which
+  OpenAI rejects with `invalid_function_parameters`. That 400'd the entire tools
+  payload, so the agent silently degraded to RAG-only and *no* `moodle_*` tool was
+  ever offered (the read-only tools added in 0.4.0 included). Tool schemas are now
+  normalised to a valid JSON object (`{"type":"object","properties":{}}`).
+
 ## [0.4.0] - 2026-06-15
 
 ### Added

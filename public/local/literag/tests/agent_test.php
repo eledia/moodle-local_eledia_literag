@@ -130,9 +130,9 @@ final class agent_test extends \advanced_testcase {
     }
 
     /**
-     * The MCP client lists only read-only tools.
+     * The MCP client returns every tool tagged with its read-only flag.
      */
-    public function test_list_tools_read_only_only(): void {
+    public function test_list_tools_tags_readonly(): void {
         $this->resetAfterTest();
         $list = ['status' => 200, 'error' => '', 'body' => json_encode(['jsonrpc' => '2.0', 'id' => 1, 'result' => [
             'tools' => [
@@ -146,8 +146,86 @@ final class agent_test extends \advanced_testcase {
 
         $tools = $mcp->list_tools();
 
-        $names = array_map(static fn($t) => $t['name'], $tools);
-        $this->assertSame(['moodle_my_grades'], $names);
+        $flags = [];
+        foreach ($tools as $t) {
+            $flags[$t['name']] = $t['readonly'];
+        }
+        $this->assertTrue($flags['moodle_my_grades']);
+        $this->assertFalse($flags['moodle_send_message']);
+    }
+
+    /**
+     * A no-argument tool's empty inputSchema is normalised to a JSON *object* schema.
+     *
+     * OpenAI rejects `parameters: []` with invalid_function_parameters, which would
+     * 400 the whole tools payload and silently disable every live tool, so an empty
+     * (or list) inputSchema must serialise as `{"type":"object","properties":{}}`.
+     */
+    public function test_list_tools_normalizes_empty_schema(): void {
+        $this->resetAfterTest();
+        $list = ['status' => 200, 'error' => '', 'body' => json_encode(['jsonrpc' => '2.0', 'id' => 1, 'result' => [
+            'tools' => [
+                ['name' => 'moodle_me', 'description' => 'd', 'inputSchema' => [],
+                    'annotations' => ['readOnlyHint' => true]],
+                ['name' => 'noschema', 'description' => 'd', 'annotations' => ['readOnlyHint' => true]],
+            ],
+        ]])];
+        $mcp = new moodle_client('https://x', 'tok', $this->queue_transport([$list]));
+
+        $tools = $mcp->list_tools();
+
+        $this->assertCount(2, $tools);
+        foreach ($tools as $t) {
+            $encoded = json_encode($t['parameters']);
+            $this->assertStringStartsWith('{', $encoded); // A JSON object, never `[]`.
+            $this->assertSame('object', $t['parameters']['type']);
+            $this->assertSame('{"type":"object","properties":{}}', $encoded);
+        }
+    }
+
+    /**
+     * A write tool can only ever PREVIEW within a turn (confirm forced false) and the
+     * resolved recipient + message are captured as a pending action.
+     */
+    public function test_write_tool_forced_to_preview(): void {
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+
+        // The model tries to send immediately (confirm:true) — the agent must override.
+        $toolcall = ['status' => 200, 'error' => '', 'body' => json_encode(['choices' => [['message' => [
+            'role' => 'assistant', 'content' => null,
+            'tool_calls' => [['id' => 'c1', 'type' => 'function', 'function' => [
+                'name' => 'moodle_send_message',
+                'arguments' => json_encode(['to_user_id' => 42, 'message' => 'I made this tutor.', 'confirm' => true]),
+            ]]],
+        ]]]])];
+        $preview = ['status' => 200, 'error' => '', 'body' => json_encode(['jsonrpc' => '2.0', 'id' => 1, 'result' => [
+            'content' => [['type' => 'text', 'text' => 'preview']],
+            'structuredContent' => ['sent' => false, 'requires_confirmation' => true,
+                'recipient' => ['id' => 42, 'fullname' => 'Erika'], 'message_preview' => 'I made this tutor.'],
+            'isError' => false,
+        ]])];
+
+        $mcpt = $this->queue_transport([$preview]);
+        $llmt = $this->queue_transport([$toolcall, $this->llm_answer('I will send the message to Erika — confirm?')]);
+        $agent = new agent(
+            new client($llmt),
+            new moodle_client('https://x', 'tok', $mcpt),
+            null,
+            null,
+            ['moodle_send_message']
+        );
+
+        $answer = $agent->run(
+            [['role' => 'user', 'content' => 'message Erika']],
+            [['type' => 'function', 'function' => ['name' => 'moodle_send_message', 'parameters' => ['type' => 'object']]]]
+        );
+
+        $this->assertStringContainsString('confirm', \core_text::strtolower($answer));
+        $this->assertStringContainsString('"confirm":false', $mcpt->bodies[0]); // Forced preview.
+        $this->assertNotNull($agent->pendingaction);
+        $this->assertSame(42, $agent->pendingaction['arguments']['to_user_id']);
+        $this->assertSame('I made this tutor.', $agent->pendingaction['arguments']['message']);
     }
 
     /**
