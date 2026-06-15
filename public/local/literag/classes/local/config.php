@@ -233,6 +233,35 @@ class config {
         return self::bool('enable_memory', false);
     }
 
+    // Live Moodle tools (elediamcp).
+
+    /**
+     * Whether the tutor may call elediamcp's live moodle_* tools.
+     *
+     * @return bool
+     */
+    public static function enable_mcp_tools(): bool {
+        return self::bool('enable_mcp_tools', true);
+    }
+
+    /**
+     * Maximum tool-call rounds per answer.
+     *
+     * @return int
+     */
+    public static function max_tool_iterations(): int {
+        return max(1, self::int('max_tool_iterations', 4));
+    }
+
+    /**
+     * Per-call timeout (seconds) for elediamcp tool requests.
+     *
+     * @return int
+     */
+    public static function mcp_timeout(): int {
+        return max(1, self::int('mcp_timeout', 10));
+    }
+
     // PDF extraction.
 
     /**

@@ -116,6 +116,7 @@ final class tutor_chat_test extends \advanced_testcase {
         global $CFG;
         $this->resetAfterTest();
         set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag'); // These tests cover RAG, not live tools.
 
         $gen = $this->getDataGenerator();
         $course = $gen->create_course();
@@ -149,6 +150,7 @@ final class tutor_chat_test extends \advanced_testcase {
         global $CFG;
         $this->resetAfterTest();
         set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag'); // These tests cover RAG, not live tools.
 
         $gen = $this->getDataGenerator();
         $course = $gen->create_course();
@@ -177,6 +179,7 @@ final class tutor_chat_test extends \advanced_testcase {
         global $CFG, $DB;
         $this->resetAfterTest();
         set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag'); // These tests cover RAG, not live tools.
 
         $gen = $this->getDataGenerator();
         $course = $gen->create_course();
@@ -212,6 +215,7 @@ final class tutor_chat_test extends \advanced_testcase {
         global $CFG;
         $this->resetAfterTest();
         set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag'); // These tests cover RAG, not live tools.
 
         $gen = $this->getDataGenerator();
         $course = $gen->create_course();
@@ -253,6 +257,7 @@ final class tutor_chat_test extends \advanced_testcase {
         global $CFG;
         $this->resetAfterTest();
         set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag'); // These tests cover RAG, not live tools.
 
         $gen = $this->getDataGenerator();
         $course = $gen->create_course();
@@ -279,6 +284,7 @@ final class tutor_chat_test extends \advanced_testcase {
         global $CFG;
         $this->resetAfterTest();
         set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag'); // These tests cover RAG, not live tools.
         $handler = new tutor_chat(new client($this->fake_llm('x')));
 
         $this->expectException(\local_literag\local\mcp\tool_exception::class);

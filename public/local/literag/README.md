@@ -140,6 +140,27 @@ Retrieval pipeline: *question → keyword normalisation → DB full-text (top ~2
 per-user permission filter → optional LLM rerank → top ~5 → grounded LLM answer*.
 When the tutor sends `rag_enabled: false`, retrieval is skipped (LLM-only mode).
 
+## Live Moodle tools
+
+Beyond the ingested corpus, the tutor can answer with the learner's **real-time
+Moodle data** by calling `webservice_elediamcp`'s read-only `moodle_*` tools
+(courses, assignments, due dates, grades, calendar, progress, forum posts, …) —
+this is the spec's Part C. literag acts as an MCP **client**: it calls
+`{system_url}/webservice/elediamcp/server.php` with the learner's user-scoped
+`moodle_token` as a Bearer, so every tool runs with that learner's own
+permissions and is audited by elediamcp.
+
+It uses OpenAI function-calling: the conversation is bootstrapped with
+`moodle_verify_user_context`, the read-only tools are advertised to the model,
+and an agent runs a **bounded** tool-calling loop (capped by `max_tool_iterations`
+and a wall-clock deadline under the block's 30 s timeout). Only **read-only**
+tools are ever exposed (never `moodle_send_message`). If tool support, the LLM
+endpoint, or elediamcp is unavailable, it degrades to a RAG-only answer.
+
+Controlled by **enable_mcp_tools** (default on; active only when retrieval is
+enabled), **max_tool_iterations** and **mcp_timeout**. Requires
+`webservice_elediamcp` and the block's MCP service to be configured.
+
 ## PDF support
 
 PDF resources are extracted to text and chunked **out of the box** — the plugin
@@ -218,7 +239,7 @@ Bundled under `vendor/` and declared in `thirdpartylibs.xml`:
 
 - Complex/scanned PDFs extract best with an optional native `pdftotext`
   (see [PDF support](#pdf-support)); image-only PDFs need OCR (not included).
-- Optional: bridge to the live `moodle_*` MCP tools for non-ingested data.
+- Image-only PDFs need OCR (not included).
 
 ## License
 

@@ -5,6 +5,20 @@ All notable changes to the **local_literag** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-06-15
+
+### Added
+- **Live Moodle tools (agentic tool-calling)**: when grounded, the tutor can now
+  call `webservice_elediamcp`'s read-only `moodle_*` tools as the learner (via the
+  user-scoped `moodle_token`, spec Part C) to answer with real-time data —
+  assignments, due dates, grades, calendar, progress, forum posts, etc. A new MCP
+  client (`mcp\moodle_client`) drives elediamcp statelessly; an `agent` runs a
+  bounded tool-calling loop (capped by `max_tool_iterations` and a wall-clock
+  deadline) on top of OpenAI function calling. The conversation is bootstrapped
+  with `moodle_verify_user_context`. Settings: `enable_mcp_tools` (default on),
+  `max_tool_iterations`, `mcp_timeout`. Read-only tools only (never `moodle_send_message`);
+  degrades gracefully to RAG-only when tools/endpoint are unavailable.
+
 ## [0.3.1] - 2026-06-15
 
 ### Fixed

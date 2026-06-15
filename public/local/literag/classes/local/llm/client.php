@@ -56,6 +56,29 @@ class client {
      * @throws llm_exception On configuration, transport or protocol failure.
      */
     public function chat(array $messages, ?string $model = null, ?int $maxtokens = null): string {
+        $result = $this->complete($messages, [], $model, $maxtokens);
+        $content = $result['content'];
+        if (!is_string($content) || trim($content) === '') {
+            throw new llm_exception('empty completion');
+        }
+        return $content;
+    }
+
+    /**
+     * Run a chat completion that may use tools (OpenAI function calling).
+     *
+     * Returns the assistant message's content (may be null on a tool-call turn),
+     * any tool calls it requested, and the raw assistant message (which the caller
+     * must append verbatim before the corresponding tool results).
+     *
+     * @param array $messages OpenAI-style messages.
+     * @param array $tools OpenAI tool definitions; empty for a plain completion.
+     * @param string|null $model Optional model override.
+     * @param int|null $maxtokens Optional max-tokens override.
+     * @return array{content: ?string, toolcalls: array, message: array}
+     * @throws llm_exception On configuration, transport or protocol failure.
+     */
+    public function complete(array $messages, array $tools = [], ?string $model = null, ?int $maxtokens = null): array {
         $apikey = config::llm_api_key();
         if ($apikey === '') {
             throw new llm_exception('LLM API key is not configured');
@@ -68,6 +91,10 @@ class client {
             'max_tokens' => $maxtokens ?? config::llm_max_tokens(),
             'stream' => false,
         ];
+        if (!empty($tools)) {
+            $payload['tools'] = array_values($tools);
+            $payload['tool_choice'] = 'auto';
+        }
 
         $url = config::llm_base_url() . '/chat/completions';
         $headers = [
@@ -94,10 +121,15 @@ class client {
             throw new llm_exception('LLM error: ' . $message);
         }
 
-        $content = $decoded['choices'][0]['message']['content'] ?? null;
-        if (!is_string($content) || trim($content) === '') {
-            throw new llm_exception('empty completion');
+        $message = $decoded['choices'][0]['message'] ?? null;
+        if (!is_array($message)) {
+            throw new llm_exception('missing message in completion');
         }
-        return $content;
+
+        return [
+            'content' => (isset($message['content']) && is_string($message['content'])) ? $message['content'] : null,
+            'toolcalls' => (isset($message['tool_calls']) && is_array($message['tool_calls'])) ? $message['tool_calls'] : [],
+            'message' => $message,
+        ];
     }
 }

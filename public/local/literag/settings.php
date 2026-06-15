@@ -187,6 +187,23 @@ if ($hassiteconfig) {
         PARAM_RAW
     ));
 
+    // Live Moodle tools (webservice_elediamcp).
+    $settings->add(new admin_setting_heading('local_literag/head_livetools',
+        get_string('head_livetools', 'local_literag'),
+        get_string('head_livetools_desc', 'local_literag')));
+
+    $settings->add(new admin_setting_configcheckbox('local_literag/enable_mcp_tools',
+        get_string('enable_mcp_tools', 'local_literag'),
+        get_string('enable_mcp_tools_desc', 'local_literag'), 1));
+
+    $settings->add(new admin_setting_configtext('local_literag/max_tool_iterations',
+        get_string('max_tool_iterations', 'local_literag'),
+        get_string('max_tool_iterations_desc', 'local_literag'), 4, PARAM_INT));
+
+    $settings->add(new admin_setting_configtext('local_literag/mcp_timeout',
+        get_string('mcp_timeout', 'local_literag'),
+        get_string('mcp_timeout_desc', 'local_literag'), 10, PARAM_INT));
+
     // Tool names (must match the tutor block).
     $settings->add(new admin_setting_heading(
         'local_literag/head_tools',

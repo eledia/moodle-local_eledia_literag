@@ -41,6 +41,8 @@ class prompt_builder {
      * @param string|null $userlang Language code to answer in.
      * @param array|null $persona Voice persona (name/role/tone/audience/instructions).
      * @param bool $grounded Whether retrieval is in effect.
+     * @param string|null $usersummary Optional LLM-ready summary of the learner (from moodle_verify_user_context).
+     * @param bool $hastools Whether live moodle_* tools are available this turn.
      * @return array OpenAI-style messages.
      */
     public static function build(
@@ -50,7 +52,9 @@ class prompt_builder {
         ?string $answerstyle,
         ?string $userlang,
         ?array $persona,
-        bool $grounded
+        bool $grounded,
+        ?string $usersummary = null,
+        bool $hastools = false
     ): array {
         $messages = [];
         $messages[] = ['role' => 'system', 'content' => self::system_prompt(
@@ -58,7 +62,9 @@ class prompt_builder {
             $answerstyle,
             $userlang,
             $persona,
-            $grounded
+            $grounded,
+            $usersummary,
+            $hastools
         )];
 
         foreach ($history as $turn) {
@@ -81,6 +87,8 @@ class prompt_builder {
      * @param string|null $userlang
      * @param array|null $persona
      * @param bool $grounded
+     * @param string|null $usersummary
+     * @param bool $hastools
      * @return string
      */
     private static function system_prompt(
@@ -88,10 +96,25 @@ class prompt_builder {
         ?string $answerstyle,
         ?string $userlang,
         ?array $persona,
-        bool $grounded
+        bool $grounded,
+        ?string $usersummary = null,
+        bool $hastools = false
     ): string {
         $lines = [];
         $lines[] = 'You are a helpful tutor embedded in a Moodle course. Answer the learner clearly and accurately.';
+
+        // Who the learner is (from moodle_verify_user_context).
+        if ($usersummary !== null && trim($usersummary) !== '') {
+            $lines[] = 'About this learner: ' . trim($usersummary);
+        }
+
+        // Live data tools.
+        if ($hastools) {
+            $lines[] = 'You can call tools to fetch the learner\'s real-time Moodle data (their courses, '
+                . 'assignments, due dates, grades, calendar, progress, forum posts, …). When the question concerns '
+                . 'the learner\'s own data or the current state of their courses, call the relevant tool rather than '
+                . 'guessing or relying only on the context below.';
+        }
 
         // Persona — voice only.
         $personatext = self::persona_text($persona);
@@ -124,12 +147,20 @@ class prompt_builder {
 
         // Grounding.
         if ($grounded && !empty($contextchunks)) {
-            $lines[] = 'Use ONLY the CONTEXT below to answer. Cite the sources you use with their markers like [S1]. '
-                . 'If the context does not contain the answer, say so plainly and do not invent facts.';
+            $lines[] = 'Ground your answer in the CONTEXT below'
+                . ($hastools ? ' and the available tools' : '')
+                . '. Cite the sources you use with their markers like [S1]. If '
+                . ($hastools ? 'neither the context nor any tool provides' : 'the context does not contain')
+                . ' the answer, say so plainly and do not invent facts.';
             $lines[] = self::context_block($contextchunks);
         } else if ($grounded) {
-            $lines[] = 'No course context could be retrieved for this question. Say that you could not find relevant '
-                . 'material in the course, and answer only with general, clearly-flagged guidance.';
+            if ($hastools) {
+                $lines[] = 'No course content was pre-retrieved for this question. Use the available tools to fetch '
+                    . 'the learner\'s data and answer; do not invent facts.';
+            } else {
+                $lines[] = 'No course context could be retrieved for this question. Say that you could not find '
+                    . 'relevant material in the course, and answer only with general, clearly-flagged guidance.';
+            }
         } else {
             $lines[] = 'Answer from your own general knowledge. Do not fabricate course-specific facts or citations.';
         }

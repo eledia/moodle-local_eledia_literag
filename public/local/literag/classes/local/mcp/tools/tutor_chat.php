@@ -18,10 +18,12 @@ declare(strict_types=1);
 
 namespace local_literag\local\mcp\tools;
 
+use local_literag\local\agent;
 use local_literag\local\config;
 use local_literag\local\conversation_repository;
 use local_literag\local\llm\client;
 use local_literag\local\llm\llm_exception;
+use local_literag\local\mcp\moodle_client;
 use local_literag\local\mcp\result;
 use local_literag\local\mcp\tool;
 use local_literag\local\mcp\tool_exception;
@@ -50,14 +52,19 @@ class tutor_chat implements tool {
     /** @var conversation_repository Conversation persistence. */
     private conversation_repository $repo;
 
+    /** @var moodle_client|null Injected elediamcp client (tests), or null to build on demand. */
+    private ?moodle_client $mcp;
+
     /**
      * Constructor.
      *
      * @param client|null $llm Optional LLM client override for testing.
      * @param conversation_repository|null $repo Optional repository override.
+     * @param moodle_client|null $mcp Optional elediamcp client override for testing.
      */
-    public function __construct(?client $llm = null, ?conversation_repository $repo = null) {
+    public function __construct(?client $llm = null, ?conversation_repository $repo = null, ?moodle_client $mcp = null) {
         $this->llm = $llm;
+        $this->mcp = $mcp;
         $this->repo = $repo ?? new conversation_repository();
     }
 
@@ -129,6 +136,35 @@ class tutor_chat implements tool {
         // Persist the learner's message before calling the model.
         $this->repo->add_message($conversation, 'user', $message);
 
+        // Live Moodle tools: when grounded and enabled, let the LLM call
+        // elediamcp's read-only moodle_* tools as the learner (spec Part C).
+        $systemurl = trim((string) ($arguments['system_url'] ?? ''));
+        $moodletoken = (string) ($arguments['moodle_token'] ?? '');
+        $tools = [];
+        $mcp = null;
+        $usersummary = null;
+        if ($ragenabled && config::enable_mcp_tools() && $systemurl !== '') {
+            $mcp = $this->mcp ?? new moodle_client($systemurl, $moodletoken);
+            // Bootstrap with a verified, LLM-ready summary of the learner.
+            $verify = $mcp->call_tool('moodle_verify_user_context', $courseid > 0 ? ['course_id' => $courseid] : []);
+            if (!$verify['iserror'] && is_array($verify['structured'])) {
+                $usersummary = (string) ($verify['structured']['summary'] ?? '');
+            }
+            foreach ($mcp->list_tools() as $tool) {
+                if ($tool['name'] === 'moodle_verify_user_context') {
+                    continue; // Already called above.
+                }
+                $tools[] = [
+                    'type' => 'function',
+                    'function' => [
+                        'name' => $tool['name'],
+                        'description' => $tool['description'],
+                        'parameters' => $tool['parameters'],
+                    ],
+                ];
+            }
+        }
+
         $messages = prompt_builder::build(
             $message,
             $contextchunks,
@@ -136,11 +172,17 @@ class tutor_chat implements tool {
             $answerstyle,
             $userlang,
             $persona,
-            $ragenabled
+            $ragenabled,
+            $usersummary,
+            !empty($tools)
         );
 
         try {
-            $answer = $this->client()->chat($messages);
+            if (!empty($tools) && $mcp !== null) {
+                $answer = (new agent($this->client(), $mcp))->run($messages, $tools);
+            } else {
+                $answer = $this->client()->chat($messages);
+            }
         } catch (llm_exception $e) {
             debugging('local_literag tutor_chat LLM failure: ' . $e->getMessage(), DEBUG_DEVELOPER);
             $this->repo->touch($conversation, (string) $answerstyle);
