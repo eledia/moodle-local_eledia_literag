@@ -121,6 +121,11 @@ class tutor_chat implements tool {
             $contextchunks = $candidates;
         }
 
+        // Deduplicate the retrieved chunks into unique source documents and number
+        // them, so the [S#] citation markers the model emits map 1:1 to the source
+        // cards (several passages of one document share one number / one card).
+        $sources = $this->number_sources($contextchunks);
+
         // Persist the learner's message before calling the model.
         $this->repo->add_message($conversation, 'user', $message);
 
@@ -147,17 +152,8 @@ class tutor_chat implements tool {
             ], true);
         }
 
-        // Build sources (sources[0] = primary; url MUST be the module_url so the
-        // block can resolve the analytics cmid).
-        $sources = [];
-        foreach ($contextchunks as $chunk) {
-            $snippet = trim(\core_text::substr((string) $chunk->chunktext, 0, 240));
-            $sources[] = [
-                'title' => (string) $chunk->sourcetitle,
-                'url' => (string) $chunk->moduleurl,
-                'snippet' => $snippet,
-            ];
-        }
+        // $sources (deduplicated, ordered, sources[0] = primary) was built above.
+        // The url MUST be the module_url so the block can resolve the analytics cmid.
         $primarycmid = !empty($contextchunks) ? (int) $contextchunks[0]->cmid : 0;
         $primarytitle = !empty($contextchunks) ? (string) $contextchunks[0]->sourcetitle : null;
         $topic = (new topic_registry())->classify($courseid, $primarytitle);
@@ -182,6 +178,42 @@ class tutor_chat implements tool {
         }
 
         return result::tool($answer, $structured, false);
+    }
+
+    /**
+     * Deduplicate context chunks into unique source documents and number them.
+     *
+     * Several retrieved passages often come from the same module; they must
+     * collapse to one numbered source card. Each chunk is tagged with its source
+     * number (`->sourcenum`) so the prompt's [S#] markers and the returned source
+     * cards share the same numbering. Order follows first (best-relevance)
+     * appearance, so sources[0] stays the primary source.
+     *
+     * @param array $contextchunks Chunk records (mutated: each gains ->sourcenum).
+     * @return array<int, array{title: string, url: string, snippet: string}> Unique sources.
+     */
+    private function number_sources(array $contextchunks): array {
+        $sources = [];
+        $index = [];
+        foreach ($contextchunks as $chunk) {
+            if ((int) $chunk->cmid > 0) {
+                $key = 'cm:' . (int) $chunk->cmid;
+            } else if ((string) $chunk->moduleurl !== '') {
+                $key = 'url:' . $chunk->moduleurl;
+            } else {
+                $key = 'title:' . $chunk->sourcetitle;
+            }
+            if (!isset($index[$key])) {
+                $index[$key] = count($sources) + 1;
+                $sources[] = [
+                    'title' => (string) $chunk->sourcetitle,
+                    'url' => (string) $chunk->moduleurl,
+                    'snippet' => trim(\core_text::substr((string) $chunk->chunktext, 0, 240)),
+                ];
+            }
+            $chunk->sourcenum = $index[$key];
+        }
+        return $sources;
     }
 
     /**

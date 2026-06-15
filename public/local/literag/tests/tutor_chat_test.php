@@ -143,6 +143,34 @@ final class tutor_chat_test extends \advanced_testcase {
     }
 
     /**
+     * Several retrieved passages of the same module collapse to one source card.
+     */
+    public function test_sources_deduplicated_by_document(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $page = $gen->create_module('page', ['course' => $course->id]);
+        $student = $gen->create_and_enrol($course, 'student');
+        $url = $CFG->wwwroot . '/mod/page/view.php?id=' . $page->cmid;
+        // Two passages (chunks) of the SAME module.
+        $this->insert_chunk((int) $course->id, (int) $page->cmid, $url);
+        $this->insert_chunk((int) $course->id, (int) $page->cmid, $url);
+        $token = $this->mint_token((int) $student->id);
+
+        $handler = new tutor_chat(new client($this->fake_llm('Glucose. [S1]')));
+        $result = $handler->handle([
+            'system_url' => $CFG->wwwroot, 'moodle_token' => $token,
+            'user_message' => 'How does photosynthesis work?', 'course_id' => (string) $course->id,
+        ]);
+
+        $this->assertCount(1, $result['structuredContent']['sources']);
+        $this->assertSame($url, $result['structuredContent']['sources'][0]['url']);
+    }
+
+    /**
      * A follow-up turn reuses the conversation and accumulates history.
      */
     public function test_followup_keeps_conversation(): void {

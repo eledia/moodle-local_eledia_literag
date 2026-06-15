@@ -5,6 +5,15 @@ All notable changes to the **local_literag** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-06-15
+
+### Fixed
+- Source citations are now **deduplicated per document and numbered by source**:
+  several retrieved passages from the same module collapse into one numbered
+  source card, and the `[S#]` markers in the answer map 1:1 to those cards
+  (previously every chunk produced its own card, so one document could appear
+  multiple times with mismatched numbering).
+
 ## [0.3.0] - 2026-06-15
 
 ### Added

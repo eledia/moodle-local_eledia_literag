@@ -146,12 +146,15 @@ class prompt_builder {
      */
     private static function context_block(array $contextchunks): string {
         $blocks = ['CONTEXT:'];
-        $i = 1;
+        $seq = 0;
         foreach ($contextchunks as $chunk) {
+            // Number by the chunk's unique source (set by tutor_chat::number_sources),
+            // so passages from the same document share one [S#] that maps to one card.
+            // Fall back to a running sequence if a caller did not assign one.
+            $num = (int) ($chunk->sourcenum ?? ++$seq);
             $title = trim((string) ($chunk->sourcetitle ?? ''));
             $text = trim((string) ($chunk->chunktext ?? ''));
-            $blocks[] = "[S{$i}] " . ($title !== '' ? $title : 'Source') . "\n" . $text;
-            $i++;
+            $blocks[] = "[S{$num}] " . ($title !== '' ? $title : 'Source') . "\n" . $text;
         }
         return implode("\n\n", $blocks);
     }
