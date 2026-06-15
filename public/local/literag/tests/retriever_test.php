@@ -67,10 +67,18 @@ final class retriever_test extends \advanced_testcase {
      */
     public function test_matching_chunk_is_returned(): void {
         $this->resetAfterTest();
-        $match = $this->insert_chunk(1, 11, 'Photosynthesis',
-            'Photosynthesis converts sunlight carbon dioxide and water into glucose and oxygen.');
-        $this->insert_chunk(1, 12, 'Mitosis',
-            'Mitosis is the process of nuclear division producing two identical daughter cells.');
+        $match = $this->insert_chunk(
+            1,
+            11,
+            'Photosynthesis',
+            'Photosynthesis converts sunlight carbon dioxide and water into glucose and oxygen.'
+        );
+        $this->insert_chunk(
+            1,
+            12,
+            'Mitosis',
+            'Mitosis is the process of nuclear division producing two identical daughter cells.'
+        );
 
         $results = (new retriever())->candidates('How does photosynthesis work?', [1], 20);
 
@@ -106,8 +114,13 @@ final class retriever_test extends \advanced_testcase {
      */
     public function test_tenant_scoping(): void {
         $this->resetAfterTest();
-        $foreign = $this->insert_chunk(1, 11, 'Photosynthesis',
-            'Photosynthesis converts sunlight into glucose energy.', 'some-other-tenant');
+        $foreign = $this->insert_chunk(
+            1,
+            11,
+            'Photosynthesis',
+            'Photosynthesis converts sunlight into glucose energy.',
+            'some-other-tenant'
+        );
 
         $results = (new retriever())->candidates('photosynthesis glucose energy', [1], 20);
         $ids = array_map(static fn($r) => $r->sourceid, $results);

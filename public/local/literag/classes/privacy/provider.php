@@ -40,9 +40,8 @@ use local_literag\local\user_eraser;
  */
 class provider implements
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\core_userlist_provider {
-
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     /**
      * Describe the data this plugin stores and transmits.
      *
@@ -143,8 +142,12 @@ class provider implements
 
         $conversations = $DB->get_records('local_literag_conversations', ['userid' => $userid], 'timecreated ASC');
         foreach ($conversations as $conversation) {
-            $messages = $DB->get_records('local_literag_messages',
-                ['conversationid' => $conversation->id], 'timecreated ASC', 'id, role, content, topic, timecreated');
+            $messages = $DB->get_records(
+                'local_literag_messages',
+                ['conversationid' => $conversation->id],
+                'timecreated ASC',
+                'id, role, content, topic, timecreated'
+            );
             $data = (object) [
                 'courseid' => $conversation->courseid,
                 'timecreated' => transform::datetime($conversation->timecreated),

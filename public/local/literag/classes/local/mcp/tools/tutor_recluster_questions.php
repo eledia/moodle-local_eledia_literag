@@ -41,6 +41,8 @@ class tutor_recluster_questions implements tool {
     private const SERVICE_USERNAME = 'elediaaitutor_service';
 
     /**
+     * Re-label a batch of logged questions (maintenance account only).
+     *
      * @param array $arguments
      * @return array
      * @throws tool_exception

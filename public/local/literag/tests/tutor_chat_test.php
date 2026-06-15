@@ -39,14 +39,28 @@ final class tutor_chat_test extends \advanced_testcase {
      * @return transport
      */
     private function fake_llm(string $answer): transport {
-        return new class($answer) implements transport {
+        return new class ($answer) implements transport {
             /** @var string */
             public string $lastbody = '';
             /** @var string */
             private string $answer;
+            /**
+             * Constructor.
+             *
+             * @param string $answer Canned assistant answer to return.
+             */
             public function __construct(string $answer) {
                 $this->answer = $answer;
             }
+            /**
+             * Return the canned chat completion.
+             *
+             * @param string $url
+             * @param array $headers
+             * @param string $body
+             * @param int $timeout
+             * @return array
+             */
             public function post(string $url, array $headers, string $body, int $timeout): array {
                 $this->lastbody = $body;
                 $payload = ['choices' => [['message' => ['role' => 'assistant', 'content' => $this->answer]]]];

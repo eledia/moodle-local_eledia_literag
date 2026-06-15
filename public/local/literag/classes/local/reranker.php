@@ -37,6 +37,8 @@ class reranker {
     private client $llm;
 
     /**
+     * Constructor.
+     *
      * @param client $llm
      */
     public function __construct(client $llm) {

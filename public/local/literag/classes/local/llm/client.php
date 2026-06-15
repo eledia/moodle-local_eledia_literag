@@ -38,6 +38,8 @@ class client {
     private transport $transport;
 
     /**
+     * Constructor.
+     *
      * @param transport|null $transport Optional override for testing.
      */
     public function __construct(?transport $transport = null) {

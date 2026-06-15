@@ -30,6 +30,8 @@ class tool_exception extends \Exception {
     public int $rpccode;
 
     /**
+     * Constructor.
+     *
      * @param string $message Diagnostic message (server-side only).
      * @param int $rpccode JSON-RPC error code (default -32000).
      */

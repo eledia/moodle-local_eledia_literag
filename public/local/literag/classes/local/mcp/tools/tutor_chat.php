@@ -51,6 +51,8 @@ class tutor_chat implements tool {
     private conversation_repository $repo;
 
     /**
+     * Constructor.
+     *
      * @param client|null $llm Optional LLM client override for testing.
      * @param conversation_repository|null $repo Optional repository override.
      */
@@ -60,6 +62,8 @@ class tutor_chat implements tool {
     }
 
     /**
+     * Answer a learner message with grounded, cited content.
+     *
      * @param array $arguments
      * @return array
      * @throws tool_exception
@@ -120,8 +124,15 @@ class tutor_chat implements tool {
         // Persist the learner's message before calling the model.
         $this->repo->add_message($conversation, 'user', $message);
 
-        $messages = prompt_builder::build($message, $contextchunks, $history, $answerstyle, $userlang,
-            $persona, $ragenabled);
+        $messages = prompt_builder::build(
+            $message,
+            $contextchunks,
+            $history,
+            $answerstyle,
+            $userlang,
+            $persona,
+            $ragenabled
+        );
 
         try {
             $answer = $this->client()->chat($messages);
@@ -155,8 +166,13 @@ class tutor_chat implements tool {
         // history reload. The tutor block's history path only carries the message
         // text (no structured sources), so live turns keep the native source cards
         // via structuredContent below, while resumed turns render this footer.
-        $this->repo->add_message($conversation, 'assistant', $answer . $this->sources_footer($sources),
-            $topic, $primarycmid);
+        $this->repo->add_message(
+            $conversation,
+            'assistant',
+            $answer . $this->sources_footer($sources),
+            $topic,
+            $primarycmid
+        );
         $this->repo->touch($conversation, (string) $answerstyle);
 
         $this->log_query($userid, $courseid, $message, $numcandidates, count($contextchunks));

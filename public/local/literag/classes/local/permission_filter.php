@@ -45,6 +45,8 @@ class permission_filter {
     private array $courseaccess = [];
 
     /**
+     * Constructor.
+     *
      * @param \stdClass $user The full user record to enforce permissions for.
      */
     public function __construct(\stdClass $user) {

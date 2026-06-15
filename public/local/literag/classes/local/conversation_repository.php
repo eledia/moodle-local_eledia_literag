@@ -128,8 +128,14 @@ class conversation_repository {
     public function recent_messages(\stdClass $conversation, ?int $limit = null): array {
         global $DB;
         $limit = $limit ?? self::HISTORY_LIMIT;
-        $rows = $DB->get_records('local_literag_messages', ['conversationid' => $conversation->id],
-            'timecreated DESC, id DESC', 'id, role, content', 0, $limit);
+        $rows = $DB->get_records(
+            'local_literag_messages',
+            ['conversationid' => $conversation->id],
+            'timecreated DESC, id DESC',
+            'id, role, content',
+            0,
+            $limit
+        );
         $rows = array_reverse($rows);
         $messages = [];
         foreach ($rows as $row) {

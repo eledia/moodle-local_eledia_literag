@@ -33,6 +33,8 @@ class ingest_exception extends \Exception {
     public int $httpstatus;
 
     /**
+     * Constructor.
+     *
      * @param string $message Diagnostic message (server-side only).
      * @param int $httpstatus HTTP status to return (default 400).
      */

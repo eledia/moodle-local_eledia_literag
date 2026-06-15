@@ -54,7 +54,12 @@ class prompt_builder {
     ): array {
         $messages = [];
         $messages[] = ['role' => 'system', 'content' => self::system_prompt(
-            $contextchunks, $answerstyle, $userlang, $persona, $grounded)];
+            $contextchunks,
+            $answerstyle,
+            $userlang,
+            $persona,
+            $grounded
+        )];
 
         foreach ($history as $turn) {
             $role = ($turn['role'] ?? 'assistant') === 'user' ? 'user' : 'assistant';

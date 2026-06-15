@@ -33,6 +33,8 @@ use local_literag\local\token_validator;
  */
 class tutor_delete_conversation implements tool {
     /**
+     * Delete one conversation owned by the authenticated user.
+     *
      * @param array $arguments
      * @return array
      * @throws tool_exception

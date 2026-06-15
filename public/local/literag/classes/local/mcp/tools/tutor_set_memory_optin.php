@@ -36,6 +36,8 @@ use local_literag\local\token_validator;
  */
 class tutor_set_memory_optin implements tool {
     /**
+     * Record long-term memory consent, erasing stored memory on opt-out.
+     *
      * @param array $arguments
      * @return array
      * @throws tool_exception

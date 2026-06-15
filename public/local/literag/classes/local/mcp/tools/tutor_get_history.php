@@ -33,6 +33,8 @@ use local_literag\local\token_validator;
  */
 class tutor_get_history implements tool {
     /**
+     * Return the messages of one of the authenticated user's conversations.
+     *
      * @param array $arguments
      * @return array
      * @throws tool_exception

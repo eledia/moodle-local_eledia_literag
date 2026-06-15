@@ -108,8 +108,13 @@ class topic_registry {
     private function match_existing(int $courseid, string $label): ?string {
         global $DB;
         $like = $DB->sql_like('label', '?', false, false);
-        $row = $DB->get_record_select('local_literag_topics', "courseid = ? AND $like",
-            [$courseid, $DB->sql_like_escape($label)], 'id, label', IGNORE_MULTIPLE);
+        $row = $DB->get_record_select(
+            'local_literag_topics',
+            "courseid = ? AND $like",
+            [$courseid, $DB->sql_like_escape($label)],
+            'id, label',
+            IGNORE_MULTIPLE
+        );
         return $row ? (string) $row->label : null;
     }
 

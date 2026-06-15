@@ -65,109 +65,181 @@ class config {
         return ($value === false || $value === null || $value === '') ? $default : (bool) ((int) $value);
     }
 
-    // --- Ingestion / transport. -------------------------------------------.
+    // Ingestion / transport.
 
-    /** @return string The shared X-API-Key the ingester must present. */
+    /**
+     * The shared X-API-Key the ingester must present.
+     *
+     * @return string
+     */
     public static function ingest_api_key(): string {
         return trim(self::str('ingest_api_key'));
     }
 
-    /** @return string Optional bearer token the tutor block must present (defence in depth). */
+    /**
+     * Optional bearer token the tutor block must present (defence in depth).
+     *
+     * @return string
+     */
     public static function transport_auth_token(): string {
         return trim(self::str('transport_auth_token'));
     }
 
-    /** @return bool Whether both HTTP endpoints are administratively disabled. */
+    /**
+     * Whether both HTTP endpoints are administratively disabled.
+     *
+     * @return bool
+     */
     public static function is_disabled(): bool {
         return self::bool('emergency_disable', false);
     }
 
-    // --- LLM client. -------------------------------------------------------.
+    // LLM client.
 
-    /** @return string OpenAI-compatible API base URL (no trailing slash). */
+    /**
+     * OpenAI-compatible API base URL (no trailing slash).
+     *
+     * @return string
+     */
     public static function llm_base_url(): string {
         return rtrim(self::str('llm_base_url', 'https://api.openai.com/v1'), '/');
     }
 
-    /** @return string LLM API key. */
+    /**
+     * LLM API key.
+     *
+     * @return string
+     */
     public static function llm_api_key(): string {
         return trim(self::str('llm_api_key'));
     }
 
-    /** @return string Chat completion model id. */
+    /**
+     * Chat completion model id.
+     *
+     * @return string
+     */
     public static function llm_model(): string {
         return trim(self::str('llm_model', 'gpt-4o-mini'));
     }
 
-    /** @return float Sampling temperature. */
+    /**
+     * Sampling temperature.
+     *
+     * @return float
+     */
     public static function llm_temperature(): float {
         $raw = self::str('llm_temperature', '0.2');
         return is_numeric($raw) ? (float) $raw : 0.2;
     }
 
-    /** @return int Maximum output tokens. */
+    /**
+     * Maximum output tokens.
+     *
+     * @return int
+     */
     public static function llm_max_tokens(): int {
         return max(1, self::int('llm_max_tokens', 1024));
     }
 
-    /** @return int LLM request timeout (seconds), kept under the block's 30s. */
+    /**
+     * LLM request timeout in seconds, kept under the block's 30s.
+     *
+     * @return int
+     */
     public static function llm_timeout(): int {
         return max(1, self::int('llm_timeout', 25));
     }
 
-    /** @return bool Whether to bypass Moodle cURL security (self-hosted LiteLLM on a private host). */
+    /**
+     * Whether to bypass Moodle cURL security (self-hosted LiteLLM on a private host).
+     *
+     * @return bool
+     */
     public static function llm_allow_private(): bool {
         return self::bool('llm_allow_private', false);
     }
 
-    // --- Reranking. --------------------------------------------------------.
+    // Reranking.
 
-    /** @return bool Whether to LLM-rerank candidates before answering. */
+    /**
+     * Whether to LLM-rerank candidates before answering.
+     *
+     * @return bool
+     */
     public static function enable_rerank(): bool {
         return self::bool('enable_rerank', false);
     }
 
-    /** @return string Rerank model id (falls back to the answer model when empty). */
+    /**
+     * Rerank model id (falls back to the answer model when empty).
+     *
+     * @return string
+     */
     public static function rerank_model(): string {
         $model = trim(self::str('rerank_model'));
         return $model !== '' ? $model : self::llm_model();
     }
 
-    // --- Chunking. ---------------------------------------------------------.
+    // Chunking.
 
-    /** @return int Target chunk size in characters. */
+    /**
+     * Target chunk size in characters.
+     *
+     * @return int
+     */
     public static function chunk_size(): int {
         return max(200, self::int('chunk_size', 1200));
     }
 
-    /** @return int Chunk overlap in characters. */
+    /**
+     * Chunk overlap in characters.
+     *
+     * @return int
+     */
     public static function chunk_overlap(): int {
         $overlap = self::int('chunk_overlap', 150);
         return max(0, min($overlap, self::chunk_size() - 1));
     }
 
-    // --- Retrieval. --------------------------------------------------------.
+    // Retrieval.
 
-    /** @return int Number of full-text candidates to fetch before filtering. */
+    /**
+     * Number of full-text candidates to fetch before filtering.
+     *
+     * @return int
+     */
     public static function retrieval_candidates(): int {
         return max(1, self::int('retrieval_candidates', 20));
     }
 
-    /** @return int Number of context chunks to keep after filtering/reranking. */
+    /**
+     * Number of context chunks to keep after filtering/reranking.
+     *
+     * @return int
+     */
     public static function context_chunks(): int {
         return max(1, self::int('context_chunks', 5));
     }
 
-    // --- Memory. -----------------------------------------------------------.
+    // Memory.
 
-    /** @return bool Whether long-term memory support is enabled at all. */
+    /**
+     * Whether long-term memory support is enabled at all.
+     *
+     * @return bool
+     */
     public static function enable_memory(): bool {
         return self::bool('enable_memory', false);
     }
 
-    // --- PDF extraction. ---------------------------------------------------.
+    // PDF extraction.
 
-    /** @return string Path to a pdftotext binary, or '' to skip PDFs. */
+    /**
+     * Path to a pdftotext binary, or '' to skip PDFs.
+     *
+     * @return string
+     */
     public static function pdftotext_path(): string {
         global $CFG;
         $path = trim(self::str('pdftotext_path'));
@@ -177,7 +249,7 @@ class config {
         return $path;
     }
 
-    // --- Logging / retention. ---------------------------------------------.
+    // Logging / retention.
 
     /**
      * Logging verbosity: 0 = errors only, 1 = counts, 2 = full (store query text).
@@ -188,44 +260,76 @@ class config {
         return self::int('log_verbosity', 1);
     }
 
-    /** @return int Days to retain query-log rows (0 = forever). */
+    /**
+     * Days to retain query-log rows (0 = forever).
+     *
+     * @return int
+     */
     public static function query_log_retention_days(): int {
         return self::int('query_log_retention_days', 90);
     }
 
-    /** @return int Days to retain conversations (0 = forever). */
+    /**
+     * Days to retain conversations (0 = forever).
+     *
+     * @return int
+     */
     public static function conversation_retention_days(): int {
         return self::int('conversation_retention_days', 365);
     }
 
-    // --- Tool names (must mirror the block's configured names). ------------.
+    // Tool names (must mirror the block's configured names).
 
-    /** @return string Chat tool name. */
+    /**
+     * Chat tool name.
+     *
+     * @return string
+     */
     public static function tool_chat(): string {
         return trim(self::str('chattoolname', 'tutor_chat'));
     }
 
-    /** @return string History tool name. */
+    /**
+     * History tool name.
+     *
+     * @return string
+     */
     public static function tool_history(): string {
         return trim(self::str('historytoolname', 'tutor_get_history'));
     }
 
-    /** @return string Delete-conversation tool name. */
+    /**
+     * Delete-conversation tool name.
+     *
+     * @return string
+     */
     public static function tool_delete(): string {
         return trim(self::str('deletetoolname', 'tutor_delete_conversation'));
     }
 
-    /** @return string Delete-user-data tool name. */
+    /**
+     * Delete-user-data tool name.
+     *
+     * @return string
+     */
     public static function tool_delete_user(): string {
         return trim(self::str('deleteusertoolname', 'tutor_delete_user_data'));
     }
 
-    /** @return string Memory opt-in tool name. */
+    /**
+     * Memory opt-in tool name.
+     *
+     * @return string
+     */
     public static function tool_memory_optin(): string {
         return trim(self::str('memoryoptintoolname', 'tutor_set_memory_optin'));
     }
 
-    /** @return string Recluster tool name. */
+    /**
+     * Recluster tool name.
+     *
+     * @return string
+     */
     public static function tool_recluster(): string {
         return trim(self::str('reclustertoolname', 'tutor_recluster_questions'));
     }

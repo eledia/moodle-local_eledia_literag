@@ -29,6 +29,8 @@ use local_literag\local\config;
  */
 class prune_logs extends \core\task\scheduled_task {
     /**
+     * Return the human-readable task name.
+     *
      * @return string
      */
     public function get_name(): string {

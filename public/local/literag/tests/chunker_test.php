@@ -75,7 +75,7 @@ final class chunker_test extends \advanced_testcase {
         $chunker = new chunker(1000, 100);
         $text = $chunker->extract_text('<h1>Title</h1><p>Hello <strong>world</strong></p>', 'text/html');
         $this->assertNotNull($text);
-        // html_to_text upper-cases headings/strong, so compare case-insensitively.
+        // HTML rendering upper-cases headings/strong, so compare case-insensitively.
         $this->assertStringContainsStringIgnoringCase('Title', $text);
         $this->assertStringContainsStringIgnoringCase('Hello', $text);
         $this->assertStringContainsStringIgnoringCase('world', $text);

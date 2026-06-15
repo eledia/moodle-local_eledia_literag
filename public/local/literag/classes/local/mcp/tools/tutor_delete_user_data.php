@@ -38,6 +38,8 @@ use local_literag\local\user_eraser;
  */
 class tutor_delete_user_data implements tool {
     /**
+     * Erase all data held for the authenticated user.
+     *
      * @param array $arguments
      * @return array
      * @throws tool_exception

@@ -38,6 +38,8 @@ class chunker {
     private int $overlap;
 
     /**
+     * Constructor.
+     *
      * @param int|null $size Chunk size; defaults to the configured value.
      * @param int|null $overlap Overlap; defaults to the configured value.
      */

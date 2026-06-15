@@ -121,8 +121,10 @@ class retriever {
             return array_values($DB->get_records_sql($sql, $params, 0, $limit));
         } catch (\dml_exception $e) {
             // A missing full-text index or unsupported syntax: degrade gracefully.
-            debugging('local_literag: full-text query failed, using LIKE fallback: ' . $e->getMessage(),
-                DEBUG_DEVELOPER);
+            debugging(
+                'local_literag: full-text query failed, using LIKE fallback: ' . $e->getMessage(),
+                DEBUG_DEVELOPER
+            );
             return null;
         }
     }

@@ -30,6 +30,8 @@ class curl_transport implements transport {
     private bool $allowprivate;
 
     /**
+     * Constructor.
+     *
      * @param bool $allowprivate True to allow private/loopback hosts (self-hosted LiteLLM).
      */
     public function __construct(bool $allowprivate = false) {
@@ -37,6 +39,8 @@ class curl_transport implements transport {
     }
 
     /**
+     * POST a body over HTTP and return the response.
+     *
      * @param string $url
      * @param string[] $headers
      * @param string $body
