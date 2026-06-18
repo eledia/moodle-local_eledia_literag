@@ -5,6 +5,18 @@ All notable changes to the **local_literag** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-06-18
+
+### Fixed
+- **Answer-style modes (Hints only / Quiz me) now reliably change behavior.** The
+  `answer_style` value the tutor block sends was already parsed, but in the system
+  prompt it was a single weak line that the opening instruction and the grounding
+  rules ("answer clearly", "ground your answer and cite the sources") overrode — so
+  on weaker models hint/quiz looked ignored. The pedagogical mode is now a dominant,
+  mode-aware directive the other rules defer to, with **strict** semantics: hint
+  never reveals the final solution (even when asked), quiz always poses questions and
+  waits for the learner's answers. Send/confirmation replies stay plain (no style).
+
 ## [0.5.0] - 2026-06-15
 
 ### Added

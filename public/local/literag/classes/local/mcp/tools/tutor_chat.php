@@ -233,7 +233,7 @@ class tutor_chat implements tool {
             ], true);
         }
 
-        // $sources (deduplicated, ordered, sources[0] = primary) was built above.
+        // The sources list (deduplicated, ordered, sources[0] = primary) was built above.
         // The url MUST be the module_url so the block can resolve the analytics cmid.
         $primarycmid = !empty($contextchunks) ? (int) $contextchunks[0]->cmid : 0;
         $primarytitle = !empty($contextchunks) ? (string) $contextchunks[0]->sourcetitle : null;
@@ -337,8 +337,10 @@ class tutor_chat implements tool {
         }
 
         try {
+            // A send/confirmation reply is a plain short sentence — never quizzed or turned into
+            // a hint — so the answer style is deliberately dropped (null) on this path only.
             $answer = $this->client()->chat(
-                prompt_builder::build($note, [], $history, $answerstyle, $userlang, $persona, false)
+                prompt_builder::build($note, [], $history, null, $userlang, $persona, false)
             );
         } catch (llm_exception $e) {
             $answer = $sent ? get_string('confirm_sent', 'local_literag') : get_string('error_llm', 'local_literag');

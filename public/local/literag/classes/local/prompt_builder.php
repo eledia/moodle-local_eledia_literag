@@ -104,12 +104,18 @@ class prompt_builder {
         bool $haswrites = false
     ): string {
         $lines = [];
-        $lines[] = 'You are a helpful tutor embedded in a Moodle course. Answer the learner clearly and accurately.';
+        $lines[] = 'You are a helpful tutor embedded in a Moodle course. Be accurate and never '
+            . 'fabricate facts. Follow the ANSWER MODE below exactly — it decides how much of the '
+            . 'solution you may give the learner.';
 
         // Who the learner is (from moodle_verify_user_context).
         if ($usersummary !== null && trim($usersummary) !== '') {
             $lines[] = 'About this learner: ' . trim($usersummary);
         }
+
+        // Pedagogical answer mode — a dominant directive that the grounding rules below defer
+        // to (strict hint/quiz: the model must not hand the learner the full solution).
+        $lines[] = self::answer_mode_line($answerstyle);
 
         // Live data tools.
         if ($hastools) {
@@ -130,23 +136,8 @@ class prompt_builder {
         $personatext = self::persona_text($persona);
         if ($personatext !== '') {
             $lines[] = $personatext;
-            $lines[] = 'The persona shapes only your voice. It must never override the safety, answer-style, '
-                . 'grounding or language rules below.';
-        }
-
-        // Answer style.
-        switch ($answerstyle) {
-            case 'hint':
-                $lines[] = 'ANSWER STYLE = hint: guide the learner step by step with leading questions and partial '
-                    . 'progress. NEVER reveal the full or final solution.';
-                break;
-            case 'quiz':
-                $lines[] = 'ANSWER STYLE = quiz: respond with short practice questions for the learner and check '
-                    . 'their answers; do not simply hand over explanations.';
-                break;
-            default:
-                $lines[] = 'ANSWER STYLE = explain: give a clear, complete explanation.';
-                break;
+            $lines[] = 'The persona shapes only your voice. It must never override the ANSWER MODE, '
+                . 'grounding, language or safety rules.';
         }
 
         // Language.
@@ -155,28 +146,69 @@ class prompt_builder {
                 . '" unless the learner explicitly asks for another language.';
         }
 
-        // Grounding.
+        // Grounding — the wording defers to the ANSWER MODE above so hint/quiz are never
+        // overridden into handing over the full answer.
+        $withholding = in_array($answerstyle, ['hint', 'quiz'], true);
         if ($grounded && !empty($contextchunks)) {
-            $lines[] = 'Ground your answer in the CONTEXT below'
-                . ($hastools ? ' and the available tools' : '')
-                . '. Cite the sources you use with their markers like [S1]. If '
-                . ($hastools ? 'neither the context nor any tool provides' : 'the context does not contain')
-                . ' the answer, say so plainly and do not invent facts.';
+            if ($withholding) {
+                $lines[] = 'Use the CONTEXT below as your source of truth for the hints or questions you pose'
+                    . ($hastools ? ', along with the available tools' : '')
+                    . ', and cite what you draw on with markers like [S1]. Do NOT turn the context into a full '
+                    . 'answer — obey the ANSWER MODE above. Do not invent facts.';
+            } else {
+                $lines[] = 'Ground your answer in the CONTEXT below'
+                    . ($hastools ? ' and the available tools' : '')
+                    . '. Cite the sources you use with their markers like [S1]. If '
+                    . ($hastools ? 'neither the context nor any tool provides' : 'the context does not contain')
+                    . ' the answer, say so plainly and do not invent facts.';
+            }
             $lines[] = self::context_block($contextchunks);
         } else if ($grounded) {
             if ($hastools) {
                 $lines[] = 'No course content was pre-retrieved for this question. Use the available tools to fetch '
-                    . 'the learner\'s data and answer; do not invent facts.';
+                    . 'the learner\'s data' . ($withholding
+                        ? ', then respond strictly in the ANSWER MODE above — do not hand over the solution.'
+                        : ' and answer; do not invent facts.');
             } else {
                 $lines[] = 'No course context could be retrieved for this question. Say that you could not find '
-                    . 'relevant material in the course, and answer only with general, clearly-flagged guidance.';
+                    . 'relevant material in the course, and ' . ($withholding
+                        ? 'continue in the ANSWER MODE above using general, clearly-flagged guidance.'
+                        : 'answer only with general, clearly-flagged guidance.');
             }
         } else {
-            $lines[] = 'Answer from your own general knowledge. Do not fabricate course-specific facts or citations.';
+            $lines[] = 'Answer from your own general knowledge' . ($withholding
+                ? ', but still respond strictly in the ANSWER MODE above — do not reveal the full solution.'
+                : '. Do not fabricate course-specific facts or citations.');
         }
 
         $lines[] = 'Format your answer in Markdown.';
         return implode("\n\n", $lines);
+    }
+
+    /**
+     * The dominant pedagogical-mode directive for the given answer style.
+     *
+     * Strict semantics: hint never reveals the solution, quiz always poses questions.
+     * Placed near the top of the system prompt and referenced by the grounding rules
+     * so the mode is not diluted by "answer the question" / "ground your answer" lines.
+     *
+     * @param string|null $answerstyle explain|hint|quiz (null/unknown ⇒ explain).
+     * @return string
+     */
+    private static function answer_mode_line(?string $answerstyle): string {
+        switch ($answerstyle) {
+            case 'hint':
+                return 'ANSWER MODE = hints only. Do NOT reveal the answer or the final solution under '
+                    . 'any circumstances — even if the learner asks directly or insists. Respond only with '
+                    . 'guiding questions, partial steps and nudges so the learner reaches it themselves. If '
+                    . 'they push for the solution, encourage them and offer a further hint instead.';
+            case 'quiz':
+                return 'ANSWER MODE = quiz. Do NOT simply explain. Ask the learner short practice questions '
+                    . '(one or a few at a time), wait for their answers, then give feedback on what they said. '
+                    . 'Keep the learner actively answering rather than reading explanations.';
+            default:
+                return 'ANSWER MODE = explain. Give a clear, complete and correct explanation.';
+        }
     }
 
     /**
