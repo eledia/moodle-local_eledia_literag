@@ -379,7 +379,7 @@ final class tutor_chat_test extends \advanced_testcase {
 
         $this->assertFalse($result['isError']);
         $this->assertSame($CFG->wwwroot, $handler->capturedsystemurl);
-        $this->assertCount(2, $mcpt->bodies); // verify user context + tools/list.
+        $this->assertCount(2, $mcpt->bodies); // Verify user context + tools/list.
     }
 
     /**
