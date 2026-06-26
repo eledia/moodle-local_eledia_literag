@@ -248,3 +248,72 @@ Keine kritischen Befunde. Als offene Arbeit uebernommen wurden:
 **Bewertung**
 Die aktuelle Shell-UI mit `local_lernhive` bleibt nutzbar. Der wichtigste offene
 UX-Schritt ist der Nicht-Shell-Fallback.
+
+---
+
+## Review-Protokoll
+
+### review01 Claude/Moodle-Core-Review vom 2026-06-25
+
+**Status:** in DevFlow uebernommen
+**Ehemalige Root-Datei:** `CODE_REVIEW_review_johannes.md`
+**Linked:** task06, bug03, test06
+
+**Uebernommene Befunde**
+
+- K-1: `user_message` ohne Laengenbegrenzung.
+- K-2: Persona-/Instruction-Felder ohne Laengenbegrenzung.
+- H-1: Query-Log fehlte im Privacy-Export.
+- H-2: `prune_logs` lud unbegrenzte Conversation-ID-Mengen.
+- H-3/M-4: veraltete Moodle-Kontextklassen.
+- H-4: `latencyms` war fest auf `0` gesetzt.
+- M-1: `pdftotext_path` verwendete `PARAM_RAW` statt `PARAM_PATH`.
+- M-2: AMD-Source-Map fehlte.
+- M-3: `ingest.php` las `$_GET['action']` direkt.
+- M-5: deutsche Sprachdatei fehlte bzw. war nicht synchron.
+- M-6: MSSQL-Fulltext-Keyname entsprach nicht dem Tabellenprefix.
+- M-7: `classes/output/shell.php` brauchte den Moodle-Guard.
+- M-8: Conversation-Key-Kollision sollte robust behandelt werden.
+- N-1/N-2/N-3: Prompt-Groesse, AMD-Pattern und `usersummary` begrenzen.
+
+**Stand**
+Die priorisierten Code-Befunde sind umgesetzt. Automatisierte PHPUnit-Ausfuehrung
+bleibt lokal durch `q01` blockiert.
+
+### review02 Handover LiteRAG vom 2026-06-25
+
+**Status:** in DevFlow uebernommen
+**Ehemalige Root-Datei:** `HANDOVER.md`
+**Linked:** task03, task05, bug01, bug02, test03
+
+**Uebernommene Befunde**
+
+- SSRF und Token-Exfiltration ueber request-seitiges `system_url`.
+- cURL-Security-Bypass nicht pauschal aktivieren.
+- Tests fuer SSRF-Pfad, `moodle_client`, Privacy, Retention und Eraser
+  ausbauen.
+- Moodle-5-Konformitaet und Kosmetik: Kontextklassen, Dispatcher-Version,
+  Latenzmessung, Timeouts, Autoloading.
+- Maturity/CI vor einer spaeteren Submission pruefen.
+
+**Stand**
+Die Security-relevanten Punkte sind umgesetzt. Breitere Privacy-/Retention-Tests
+und Submission-Reife bleiben Backlog-Themen.
+
+### review03 UX/UI-Review vom 2026-06-26
+
+**Status:** in DevFlow uebernommen
+**Ehemalige Root-Datei:** `UX_REVIEW_review_johannes.md`
+**Linked:** task08, bug04, bug05, test07
+
+**Uebernommene Befunde**
+
+- Keine kritischen UX- oder A11y-Blocker.
+- Shell-Adoption mit `local_lernhive` ist gut.
+- Ohne `local_lernhive` bleibt nur rohes Moodle-Admin-Styling.
+- `sectionnav()` und CSS sind stark an `lh-*` Klassen gekoppelt.
+- CSS-Variablen/Selektoren sollen auf eLeDia-Konvention geprueft werden.
+- AMD-Modul und `confirm_sent` bleiben kleine Wartungsthemen.
+
+**Stand**
+Die UX-Befunde sind als offener `task08` mit `bug04` und `bug05` dokumentiert.
