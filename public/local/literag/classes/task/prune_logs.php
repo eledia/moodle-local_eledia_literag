@@ -28,6 +28,9 @@ use local_literag\local\config;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class prune_logs extends \core\task\scheduled_task {
+    /** @var int Number of expired conversations to delete per batch. */
+    private const CONVERSATION_BATCH_SIZE = 500;
+
     /**
      * Return the human-readable task name.
      *
@@ -56,12 +59,24 @@ class prune_logs extends \core\task\scheduled_task {
         $convdays = config::conversation_retention_days();
         if ($convdays > 0) {
             $cutoff = $now - ($convdays * DAYSECS);
-            $oldids = $DB->get_fieldset_select('local_literag_conversations', 'id', 'timemodified < ?', [$cutoff]);
-            if (!empty($oldids)) {
+            do {
+                $oldrecords = $DB->get_records_select(
+                    'local_literag_conversations',
+                    'timemodified < ?',
+                    [$cutoff],
+                    'id ASC',
+                    'id',
+                    0,
+                    self::CONVERSATION_BATCH_SIZE
+                );
+                $oldids = array_keys($oldrecords);
+                if (empty($oldids)) {
+                    break;
+                }
                 [$insql, $params] = $DB->get_in_or_equal($oldids);
                 $DB->delete_records_select('local_literag_messages', "conversationid $insql", $params);
                 $DB->delete_records_select('local_literag_conversations', "id $insql", $params);
-            }
+            } while (count($oldids) === self::CONVERSATION_BATCH_SIZE);
         }
     }
 }

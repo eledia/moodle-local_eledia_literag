@@ -31,6 +31,18 @@ namespace local_literag\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class prompt_builder {
+    /** @var array<string, int> Maximum prompt-visible persona field lengths. */
+    private const PERSONA_FIELD_LIMITS = [
+        'name' => 80,
+        'role' => 200,
+        'tone' => 200,
+        'audience' => 200,
+        'instructions' => 500,
+    ];
+
+    /** @var int Maximum learner summary length included in the system prompt. */
+    private const USER_SUMMARY_LIMIT = 500;
+
     /**
      * Build the messages array for the chat completion.
      *
@@ -110,7 +122,7 @@ class prompt_builder {
 
         // Who the learner is (from moodle_verify_user_context).
         if ($usersummary !== null && trim($usersummary) !== '') {
-            $lines[] = 'About this learner: ' . trim($usersummary);
+            $lines[] = 'About this learner: ' . self::clean_prompt_text($usersummary, self::USER_SUMMARY_LIMIT);
         }
 
         // Pedagogical answer mode — a dominant directive that the grounding rules below defer
@@ -142,8 +154,11 @@ class prompt_builder {
 
         // Language.
         if ($userlang !== null && trim($userlang) !== '') {
-            $lines[] = 'Answer in the language with code "' . trim($userlang)
-                . '" unless the learner explicitly asks for another language.';
+            $lang = clean_param(trim($userlang), PARAM_LANG);
+            if ($lang !== '') {
+                $lines[] = 'Answer in the language with code "' . $lang
+                    . '" unless the learner explicitly asks for another language.';
+            }
         }
 
         // Grounding — the wording defers to the ANSWER MODE above so hint/quiz are never
@@ -243,21 +258,48 @@ class prompt_builder {
             return '';
         }
         $parts = [];
-        if (!empty($persona['name'])) {
-            $parts[] = 'You are called "' . trim((string) $persona['name']) . '".';
+        if (($value = self::persona_field($persona, 'name')) !== '') {
+            $parts[] = 'You are called "' . $value . '".';
         }
-        if (!empty($persona['role'])) {
-            $parts[] = 'Your role: ' . trim((string) $persona['role']) . '.';
+        if (($value = self::persona_field($persona, 'role')) !== '') {
+            $parts[] = 'Your role: ' . $value . '.';
         }
-        if (!empty($persona['tone'])) {
-            $parts[] = 'Your tone: ' . trim((string) $persona['tone']) . '.';
+        if (($value = self::persona_field($persona, 'tone')) !== '') {
+            $parts[] = 'Your tone: ' . $value . '.';
         }
-        if (!empty($persona['audience'])) {
-            $parts[] = 'Your audience: ' . trim((string) $persona['audience']) . '.';
+        if (($value = self::persona_field($persona, 'audience')) !== '') {
+            $parts[] = 'Your audience: ' . $value . '.';
         }
-        if (!empty($persona['instructions'])) {
-            $parts[] = 'Style guidance: ' . trim((string) $persona['instructions']);
+        if (($value = self::persona_field($persona, 'instructions')) !== '') {
+            $parts[] = 'Style guidance: ' . $value;
         }
         return implode(' ', $parts);
+    }
+
+    /**
+     * Get and bound one persona field for prompt use.
+     *
+     * @param array $persona
+     * @param string $key
+     * @return string
+     */
+    private static function persona_field(array $persona, string $key): string {
+        if (empty($persona[$key]) || !isset(self::PERSONA_FIELD_LIMITS[$key])) {
+            return '';
+        }
+        return self::clean_prompt_text((string) $persona[$key], self::PERSONA_FIELD_LIMITS[$key]);
+    }
+
+    /**
+     * Normalise prompt text and enforce a character limit.
+     *
+     * @param string $value Raw value.
+     * @param int $limit Maximum characters.
+     * @return string
+     */
+    private static function clean_prompt_text(string $value, int $limit): string {
+        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+        return \core_text::substr($value, 0, $limit);
     }
 }

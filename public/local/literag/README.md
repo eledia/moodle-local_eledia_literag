@@ -146,9 +146,10 @@ Beyond the ingested corpus, the tutor can answer with the learner's **real-time
 Moodle data** by calling `webservice_elediamcp`'s read-only `moodle_*` tools
 (courses, assignments, due dates, grades, calendar, progress, forum posts, …) —
 this is the spec's Part C. literag acts as an MCP **client**: it calls
-`{system_url}/webservice/elediamcp/server.php` with the learner's user-scoped
-`moodle_token` as a Bearer, so every tool runs with that learner's own
-permissions and is audited by elediamcp.
+the local Moodle site's `{$CFG->wwwroot}/webservice/elediamcp/server.php` with
+the learner's user-scoped `moodle_token` as a Bearer, so every tool runs with
+that learner's own permissions and is audited by elediamcp. Request-supplied
+`system_url` values are ignored for this internal loopback call.
 
 It uses OpenAI function-calling: the conversation is bootstrapped with
 `moodle_verify_user_context`, the read-only tools are advertised to the model,

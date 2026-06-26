@@ -47,6 +47,9 @@ use local_literag\local\topic_registry;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tutor_chat implements tool {
+    /** @var int Maximum accepted learner message length in characters. */
+    private const MAX_MESSAGE_CHARS = 4000;
+
     /** @var client|null Injected LLM client (tests), or null to build on demand. */
     private ?client $llm;
 
@@ -77,7 +80,7 @@ class tutor_chat implements tool {
      * @throws tool_exception
      */
     public function handle(array $arguments): array {
-        global $DB;
+        global $CFG, $DB;
 
         $user = token_validator::resolve_user((string) ($arguments['moodle_token'] ?? ''));
         if ($user === null) {
@@ -91,11 +94,16 @@ class tutor_chat implements tool {
         if ($message === '') {
             throw new tool_exception('missing user_message');
         }
+        if (\core_text::strlen($message) > self::MAX_MESSAGE_CHARS) {
+            throw new tool_exception('user_message too long');
+        }
+        $starttime = microtime(true);
 
         $courseid = (int) ($arguments['course_id'] ?? 0);
         $answerstyle = in_array(($arguments['answer_style'] ?? ''), ['explain', 'hint', 'quiz'], true)
             ? (string) $arguments['answer_style'] : null;
-        $userlang = isset($arguments['user_lang']) ? (string) $arguments['user_lang'] : null;
+        $userlang = isset($arguments['user_lang']) ? clean_param((string) $arguments['user_lang'], PARAM_LANG) : null;
+        $userlang = $userlang !== '' ? $userlang : null;
         $ragenabled = array_key_exists('rag_enabled', $arguments) ? (bool) $arguments['rag_enabled'] : true;
         $persona = (isset($arguments['persona']) && is_array($arguments['persona'])) ? $arguments['persona'] : null;
 
@@ -111,7 +119,7 @@ class tutor_chat implements tool {
 
         $history = $this->repo->recent_messages($conversation);
 
-        $systemurl = trim((string) ($arguments['system_url'] ?? ''));
+        $systemurl = $CFG->wwwroot;
         $moodletoken = (string) ($arguments['moodle_token'] ?? '');
 
         // Confirmation turn: a write previewed on the previous turn is sent now, and
@@ -170,7 +178,7 @@ class tutor_chat implements tool {
         $mcp = null;
         $usersummary = null;
         if ($ragenabled && config::enable_mcp_tools() && $systemurl !== '') {
-            $mcp = $this->mcp ?? new moodle_client($systemurl, $moodletoken);
+            $mcp = $this->mcp ?? $this->moodle_client($systemurl, $moodletoken);
             // Bootstrap with a verified, LLM-ready summary of the learner.
             $verify = $mcp->call_tool('moodle_verify_user_context', $courseid > 0 ? ['course_id' => $courseid] : []);
             if (!$verify['iserror'] && is_array($verify['structured'])) {
@@ -245,7 +253,8 @@ class tutor_chat implements tool {
         $this->repo->add_message($conversation, 'assistant', $answer, $topic, $primarycmid, $sources);
         $this->repo->touch($conversation, (string) $answerstyle);
 
-        $this->log_query($userid, $courseid, $message, $numcandidates, count($contextchunks));
+        $latencyms = (int) round((microtime(true) - $starttime) * 1000);
+        $this->log_query($userid, $courseid, $message, $numcandidates, count($contextchunks), $latencyms);
 
         $structured = [
             'answer' => $answer,
@@ -320,7 +329,7 @@ class tutor_chat implements tool {
         ?string $userlang,
         ?array $persona
     ): array {
-        $mcp = $this->mcp ?? new moodle_client($systemurl, $moodletoken);
+        $mcp = $this->mcp ?? $this->moodle_client($systemurl, $moodletoken);
         $args = is_array($pending['arguments'] ?? null) ? $pending['arguments'] : [];
         $args['confirm'] = true;
         $result = $mcp->call_tool((string) ($pending['tool'] ?? ''), $args);
@@ -364,6 +373,20 @@ class tutor_chat implements tool {
     }
 
     /**
+     * Build the Moodle MCP client.
+     *
+     * Kept overridable for tests: the system URL must be the local Moodle wwwroot,
+     * never a request-supplied host.
+     *
+     * @param string $systemurl Canonical Moodle wwwroot.
+     * @param string $moodletoken User-scoped MCP token.
+     * @return moodle_client
+     */
+    protected function moodle_client(string $systemurl, string $moodletoken): moodle_client {
+        return new moodle_client($systemurl, $moodletoken);
+    }
+
+    /**
      * Record an operational query-log row (query text only at full verbosity).
      *
      * @param int $userid
@@ -371,9 +394,17 @@ class tutor_chat implements tool {
      * @param string $message
      * @param int $numcandidates
      * @param int $numreturned
+     * @param int $latencyms Wall-clock latency for the handled turn.
      * @return void
      */
-    private function log_query(int $userid, int $courseid, string $message, int $numcandidates, int $numreturned): void {
+    private function log_query(
+        int $userid,
+        int $courseid,
+        string $message,
+        int $numcandidates,
+        int $numreturned,
+        int $latencyms
+    ): void {
         global $DB;
         $DB->insert_record('local_literag_query_log', (object) [
             'userid' => $userid,
@@ -384,7 +415,7 @@ class tutor_chat implements tool {
             'numreturned' => $numreturned,
             'usedllm' => 1,
             'reranked' => config::enable_rerank() ? 1 : 0,
-            'latencyms' => 0,
+            'latencyms' => max(0, $latencyms),
             'timecreated' => time(),
         ]);
     }

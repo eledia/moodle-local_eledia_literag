@@ -298,6 +298,91 @@ final class tutor_chat_test extends \advanced_testcase {
     }
 
     /**
+     * Overlong learner messages are rejected before prompt construction.
+     */
+    public function test_overlong_user_message_throws(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag');
+
+        $user = $this->getDataGenerator()->create_user();
+        $token = $this->mint_token((int) $user->id);
+        $handler = new tutor_chat(new client($this->fake_llm('x')));
+
+        $this->expectException(\local_literag\local\mcp\tool_exception::class);
+        $this->expectExceptionMessage('user_message too long');
+        $handler->handle([
+            'system_url' => $CFG->wwwroot,
+            'moodle_token' => $token,
+            'user_message' => str_repeat('x', 4001),
+        ]);
+    }
+
+    /**
+     * Request-supplied system_url is ignored for live Moodle tools.
+     */
+    public function test_live_tools_use_cfg_wwwroot_not_request_system_url(): void {
+        global $CFG;
+
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 1, 'local_literag');
+        set_config('enable_write_tools', 0, 'local_literag');
+
+        $user = $this->getDataGenerator()->create_user();
+        $token = $this->mint_token((int) $user->id);
+        $mcpresponse = json_encode(['jsonrpc' => '2.0', 'id' => 1, 'result' => [
+            'content' => [['type' => 'text', 'text' => 'ok']],
+            'structuredContent' => ['summary' => 'Test user'],
+            'isError' => false,
+            'tools' => [],
+        ]]);
+        $mcpt = $this->fake_json_transport($mcpresponse);
+        $handler = new class (new client($this->fake_llm('Plain answer.')), $mcpt) extends tutor_chat {
+            /** @var string Captured system URL used to build the MCP client. */
+            public string $capturedsystemurl = '';
+
+            /** @var transport Fake MCP transport. */
+            private transport $transport;
+
+            /**
+             * Constructor.
+             *
+             * @param client $llm Fake LLM client.
+             * @param transport $transport Fake MCP transport.
+             */
+            public function __construct(client $llm, transport $transport) {
+                parent::__construct($llm);
+                $this->transport = $transport;
+            }
+
+            /**
+             * Capture the URL and return a fake MCP client.
+             *
+             * @param string $systemurl Canonical Moodle wwwroot.
+             * @param string $moodletoken User-scoped MCP token.
+             * @return moodle_client
+             */
+            protected function moodle_client(string $systemurl, string $moodletoken): moodle_client {
+                $this->capturedsystemurl = $systemurl;
+                return new moodle_client($systemurl, $moodletoken, $this->transport);
+            }
+        };
+
+        $result = $handler->handle([
+            'system_url' => 'https://evil.example',
+            'moodle_token' => $token,
+            'user_message' => 'Hello',
+            'rag_enabled' => true,
+        ]);
+
+        $this->assertFalse($result['isError']);
+        $this->assertSame($CFG->wwwroot, $handler->capturedsystemurl);
+        $this->assertCount(2, $mcpt->bodies); // verify user context + tools/list.
+    }
+
+    /**
      * A transport that always replies with one JSON body and records request bodies.
      *
      * @param string $body Response body.

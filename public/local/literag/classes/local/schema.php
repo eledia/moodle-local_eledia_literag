@@ -65,8 +65,9 @@ class schema {
                             $DB->execute("CREATE FULLTEXT CATALOG {local_literag_catalog} WITH ACCENT_SENSITIVITY=OFF");
                         }
                         $changetracking = (defined('PHPUNIT_UTIL') && PHPUNIT_UTIL) ? 'MANUAL' : 'AUTO';
+                        $pkname = $DB->get_prefix() . 'locallitechun_id_pk';
                         $DB->execute("CREATE FULLTEXT INDEX ON {local_literag_chunks} (chunktext, sourcetitle) " .
-                            "KEY INDEX {locallitechun_id_pk} ON {local_literag_catalog} WITH CHANGE_TRACKING $changetracking");
+                            "KEY INDEX $pkname ON {local_literag_catalog} WITH CHANGE_TRACKING $changetracking");
                     }
                     break;
                 default:

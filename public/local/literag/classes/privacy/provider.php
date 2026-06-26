@@ -108,7 +108,7 @@ class provider implements
      */
     public static function get_users_in_context(userlist $userlist): void {
         $context = $userlist->get_context();
-        if (!$context instanceof \context_system) {
+        if (!$context instanceof \core\context\system) {
             return;
         }
         foreach (['local_literag_conversations', 'local_literag_memory', 'local_literag_query_log'] as $table) {
@@ -127,7 +127,7 @@ class provider implements
 
         $usesystem = false;
         foreach ($contextlist->get_contexts() as $context) {
-            if ($context instanceof \context_system) {
+            if ($context instanceof \core\context\system) {
                 $usesystem = true;
                 break;
             }
@@ -137,7 +137,7 @@ class provider implements
         }
 
         $userid = $contextlist->get_user()->id;
-        $context = \context_system::instance();
+        $context = \core\context\system::instance();
         $root = [get_string('pluginname', 'local_literag')];
 
         $conversations = $DB->get_records('local_literag_conversations', ['userid' => $userid], 'timecreated ASC');
@@ -173,6 +173,30 @@ class provider implements
                 (object) ['facts' => array_values(array_map(static fn($m) => $m->mvalue, $memory))]
             );
         }
+
+        $logs = $DB->get_records(
+            'local_literag_query_log',
+            ['userid' => $userid],
+            'timecreated ASC',
+            'id, courseid, querytext, numcandidates, numreturned, usedllm, reranked, latencyms, timecreated'
+        );
+        if ($logs) {
+            writer::with_context($context)->export_data(
+                array_merge($root, [get_string('privacy:querylogs', 'local_literag')]),
+                (object) ['queries' => array_values(array_map(static function ($log) {
+                    return (object) [
+                        'courseid' => $log->courseid,
+                        'querytext' => $log->querytext,
+                        'numcandidates' => $log->numcandidates,
+                        'numreturned' => $log->numreturned,
+                        'usedllm' => $log->usedllm,
+                        'reranked' => $log->reranked,
+                        'latencyms' => $log->latencyms,
+                        'timecreated' => transform::datetime($log->timecreated),
+                    ];
+                }, $logs))]
+            );
+        }
     }
 
     /**
@@ -183,7 +207,7 @@ class provider implements
      */
     public static function delete_data_for_all_users_in_context(\context $context): void {
         global $DB;
-        if (!$context instanceof \context_system) {
+        if (!$context instanceof \core\context\system) {
             return;
         }
         $DB->delete_records('local_literag_messages');
@@ -200,7 +224,7 @@ class provider implements
      */
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         foreach ($contextlist->get_contexts() as $context) {
-            if ($context instanceof \context_system) {
+            if ($context instanceof \core\context\system) {
                 user_eraser::erase((int) $contextlist->get_user()->id);
                 return;
             }
@@ -214,7 +238,7 @@ class provider implements
      * @return void
      */
     public static function delete_data_for_users(approved_userlist $userlist): void {
-        if (!$userlist->get_context() instanceof \context_system) {
+        if (!$userlist->get_context() instanceof \core\context\system) {
             return;
         }
         foreach ($userlist->get_userids() as $userid) {

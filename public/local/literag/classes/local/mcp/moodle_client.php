@@ -47,6 +47,9 @@ class moodle_client {
     /** @var string User-scoped Moodle MCP token (Bearer). */
     private string $token;
 
+    /** @var string[] Additional headers needed for local loopback aliases. */
+    private array $extraheaders = [];
+
     /** @var transport HTTP transport. */
     private transport $transport;
 
@@ -63,10 +66,55 @@ class moodle_client {
      */
     public function __construct(string $systemurl, string $token, ?transport $transport = null, ?int $timeout = null) {
         $this->endpoint = rtrim($systemurl, '/') . '/webservice/elediamcp/server.php';
+        $this->normalise_local_loopback_endpoint($systemurl);
         $this->token = $token;
-        // Loopback to our own site: bypass the cURL security blocklist (private/loopback hosts).
-        $this->transport = $transport ?? new curl_transport(true);
+        // Only loopback to this Moodle may bypass the cURL security blocklist.
+        $this->transport = $transport ?? new curl_transport(self::is_own_wwwroot($systemurl));
         $this->timeout = $timeout ?? config::mcp_timeout();
+    }
+
+    /**
+     * Check whether a base URL targets this Moodle wwwroot.
+     *
+     * @param string $systemurl Candidate base URL.
+     * @return bool
+     */
+    private static function is_own_wwwroot(string $systemurl): bool {
+        global $CFG;
+
+        return rtrim($systemurl, '/') === rtrim((string) $CFG->wwwroot, '/');
+    }
+
+    /**
+     * Route local Docker callbacks through the host while preserving Moodle's public host.
+     *
+     * In the local Docker setup, this Moodle's public wwwroot is usually
+     * http://localhost:8080. That address is correct for the browser and for
+     * external MCP clients, but from inside the PHP container localhost points to
+     * the container itself. host.docker.internal reaches the host-published Moodle
+     * port; the Host header keeps Moodle URL routing on the configured wwwroot.
+     *
+     * @param string $systemurl Candidate base URL.
+     */
+    private function normalise_local_loopback_endpoint(string $systemurl): void {
+        global $CFG;
+
+        if (!self::is_own_wwwroot($systemurl)) {
+            return;
+        }
+
+        $parts = parse_url((string) $CFG->wwwroot);
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        if (!in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
+            return;
+        }
+
+        $scheme = (string) ($parts['scheme'] ?? 'http');
+        $port = isset($parts['port']) ? ':' . (int) $parts['port'] : '';
+        $path = rtrim((string) ($parts['path'] ?? ''), '/');
+
+        $this->endpoint = $scheme . '://host.docker.internal' . $port . $path . '/webservice/elediamcp/server.php';
+        $this->extraheaders[] = 'Host: ' . $host . $port;
     }
 
     /**
@@ -181,6 +229,7 @@ class moodle_client {
             'MCP-Protocol-Version: ' . self::PROTOCOL_VERSION,
             'Authorization: Bearer ' . $this->token,
         ];
+        $headers = array_merge($headers, $this->extraheaders);
 
         $response = $this->transport->post($this->endpoint, $headers, (string) $payload, $this->timeout);
         if ($response['error'] !== '' || $response['status'] < 200 || $response['status'] >= 300) {

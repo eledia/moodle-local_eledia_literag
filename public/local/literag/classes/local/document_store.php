@@ -223,7 +223,7 @@ class document_store {
             return 0;
         }
         try {
-            return (int) \context_module::instance($cmid)->id;
+            return (int) \core\context\module::instance($cmid)->id;
         } catch (\moodle_exception $e) {
             return 0;
         }

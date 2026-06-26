@@ -61,7 +61,6 @@ class conversation_repository {
         global $DB;
         $now = time();
         $record = (object) [
-            'convkey' => 'conv-' . random_string(24),
             'userid' => $userid,
             'courseid' => $courseid,
             'tenant' => tenant::id(),
@@ -69,8 +68,18 @@ class conversation_repository {
             'timecreated' => $now,
             'timemodified' => $now,
         ];
-        $record->id = $DB->insert_record('local_literag_conversations', $record);
-        return $record;
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                $record->convkey = 'conv-' . random_string(24);
+                $record->id = $DB->insert_record('local_literag_conversations', $record);
+                return $record;
+            } catch (\dml_exception $e) {
+                if ($attempt === 2) {
+                    throw $e;
+                }
+            }
+        }
+        throw new \coding_exception('Could not generate unique conversation key');
     }
 
     /**

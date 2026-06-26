@@ -1,0 +1,100 @@
+.lr-admin-settings-shell-page {
+    --lr-settings-primary: var(--lh-primary, #194866);
+    --lr-settings-primary-dark: var(--lh-primary-dark, #0f2b3d);
+    --lr-settings-primary-light: var(--lh-primary-light, #f3f5f8);
+    --lr-settings-border: var(--lh-border, #dbe7ee);
+    --lr-settings-muted: var(--lh-text-secondary, #5f6b77);
+    --lr-settings-text: var(--lh-text, #1f2937);
+    --lr-settings-radius: var(--lh-radius-sm, 8px);
+    --lr-settings-shadow: var(--lh-shadow-card, 0 2px 8px rgba(15, 23, 42, 0.05));
+}
+
+#page-admin-setting-local_literag #adminsettings {
+    max-width: var(--lh-page-max-default, 72rem);
+}
+
+.lr-admin-settings-shell #adminsettings {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    margin: 0;
+    max-width: none;
+    padding: 0;
+    width: 100%;
+}
+
+.lr-admin-settings-shell #adminsettings fieldset {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    margin: 0;
+    min-width: 0;
+    padding: 0;
+}
+
+.lr-admin-settings-shell-page #page-header,
+.lr-admin-settings-shell-page .secondary-navigation,
+.lr-admin-settings-shell-page #region-main > div[role="main"] > h1:first-child,
+.lr-admin-settings-shell-page #region-main > div[role="main"] > h2:first-child,
+.lr-admin-settings-shell #adminsettings > h1,
+.lr-admin-settings-shell #adminsettings > h2 {
+    display: none;
+}
+
+.lr-admin-settings-shell-page #region-main {
+    background: transparent;
+    border: 0;
+    padding-top: 0;
+}
+
+#page-admin-setting-local_literag #adminsettings h3.main {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--lr-settings-border);
+    border-radius: 0;
+    color: var(--lr-settings-text);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 1.25rem 0 0.55rem;
+    padding: 0 0 0.35rem;
+    scroll-margin-top: 1rem;
+}
+
+.lr-settings-section-card {
+    background: #fff;
+    border: 1px solid var(--lr-settings-border);
+    border-radius: var(--lr-settings-radius);
+    box-shadow: var(--lr-settings-shadow);
+    margin: 0 0 0.85rem;
+    overflow: hidden;
+    padding-bottom: 0.25rem;
+}
+
+#page-admin-setting-local_literag #adminsettings .lr-settings-section-card .formsettingheading {
+    color: var(--lr-settings-text);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0.85rem 1rem 0.25rem;
+}
+
+#page-admin-setting-local_literag #adminsettings .form-item {
+    border: 0;
+    border-bottom: 1px solid var(--lr-settings-border);
+    margin: 0;
+    padding: 0.85rem 1rem;
+}
+
+#page-admin-setting-local_literag #adminsettings .form-item:last-child {
+    border-bottom: 0;
+}
+
+#page-admin-setting-local_literag #adminsettings .form-label .form-shortname {
+    color: var(--lr-settings-muted);
+}
+
+#page-admin-setting-local_literag #adminsettings .form-description {
+    color: var(--lr-settings-muted);
+    line-height: 1.45;
+}

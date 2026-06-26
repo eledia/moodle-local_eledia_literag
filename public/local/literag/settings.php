@@ -24,9 +24,71 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use local_literag\output\shell;
+
 if ($hassiteconfig) {
+    require_once(__DIR__ . '/classes/output/shell.php');
+
     $settings = new admin_settingpage('local_literag', get_string('pluginname', 'local_literag'));
     $ADMIN->add('localplugins', $settings);
+
+    $currentsection = optional_param('section', '', PARAM_ALPHANUMEXT);
+    if ($ADMIN->fulltree && $currentsection === 'local_literag') {
+        global $OUTPUT, $PAGE;
+
+        shell::require_css();
+
+        if (shell::is_available()) {
+            $sectioncards = [
+                [
+                    'key' => 'connection',
+                    'icon' => 'fa-link',
+                    'title' => get_string('head_connection', 'local_literag'),
+                    'body' => get_string('settings_section_connection_desc', 'local_literag'),
+                ],
+                [
+                    'key' => 'llm',
+                    'icon' => 'fa-brain',
+                    'title' => get_string('head_llm', 'local_literag'),
+                    'body' => get_string('settings_section_llm_desc', 'local_literag'),
+                ],
+                [
+                    'key' => 'retrieval',
+                    'icon' => 'fa-search',
+                    'title' => get_string('head_retrieval', 'local_literag'),
+                    'body' => get_string('settings_section_retrieval_desc', 'local_literag'),
+                ],
+                [
+                    'key' => 'livetools',
+                    'icon' => 'fa-plug',
+                    'title' => get_string('head_livetools', 'local_literag'),
+                    'body' => get_string('settings_section_livetools_desc', 'local_literag'),
+                ],
+                [
+                    'key' => 'tools',
+                    'icon' => 'fa-wrench',
+                    'title' => get_string('head_tools', 'local_literag'),
+                    'body' => get_string('settings_section_tools_desc', 'local_literag'),
+                ],
+                [
+                    'key' => 'privacy',
+                    'icon' => 'fa-shield-alt',
+                    'title' => get_string('head_privacy', 'local_literag'),
+                    'body' => get_string('settings_section_privacy_desc', 'local_literag'),
+                ],
+            ];
+            $headerhtml = $OUTPUT->render_from_template(
+                'local_lernhive/plugin_shell_header',
+                shell::context(shell::ACTIVE_SETTINGS)
+            );
+            $PAGE->requires->js_call_amd('local_literag/settings_shell', 'init', [[
+                'headerHtml' => $headerhtml,
+                'sectionCards' => $sectioncards,
+                'pluginTitle' => get_string('pluginname', 'local_literag'),
+                'hubDesc' => get_string('settings_hub_desc', 'local_literag'),
+            ]]);
+        }
+    }
 
     // Connection (ingestion + transport).
     $settings->add(new admin_setting_heading(
@@ -184,7 +246,7 @@ if ($hassiteconfig) {
         get_string('pdftotext_path', 'local_literag'),
         get_string('pdftotext_path_desc', 'local_literag'),
         '',
-        PARAM_RAW
+        PARAM_PATH
     ));
 
     // Live Moodle tools (webservice_elediamcp).

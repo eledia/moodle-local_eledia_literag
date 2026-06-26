@@ -43,6 +43,27 @@ final class prompt_builder_test extends \advanced_testcase {
     }
 
     /**
+     * Build the full system prompt with explicit persona and learner summary.
+     *
+     * @param array|null $persona
+     * @param string|null $usersummary
+     * @return string The assembled system-prompt text.
+     */
+    private function system_prompt_with_persona(?array $persona, ?string $usersummary = null): string {
+        $messages = prompt_builder::build(
+            'Hello.',
+            [],
+            [],
+            'explain',
+            'en',
+            $persona,
+            false,
+            $usersummary
+        );
+        return (string) $messages[0]['content'];
+    }
+
+    /**
      * A context chunk record as the retriever would produce.
      *
      * @param string $title
@@ -126,5 +147,25 @@ final class prompt_builder_test extends \advanced_testcase {
         $this->assertStringContainsString('Answer from your own general knowledge', $prompt);
         $this->assertStringContainsString('respond strictly in the ANSWER MODE', $prompt);
         $this->assertStringContainsString('do not reveal the full solution', $prompt);
+    }
+
+    /**
+     * Persona and learner summary are bounded before entering the system prompt.
+     */
+    public function test_persona_and_user_summary_are_bounded(): void {
+        $prompt = $this->system_prompt_with_persona([
+            'name' => str_repeat('N', 100),
+            'role' => str_repeat('R', 250),
+            'tone' => str_repeat('T', 250),
+            'audience' => str_repeat('A', 250),
+            'instructions' => str_repeat('I', 800),
+        ], str_repeat('S', 800));
+
+        $this->assertStringContainsString('You are called "' . str_repeat('N', 80) . '".', $prompt);
+        $this->assertStringNotContainsString(str_repeat('N', 81), $prompt);
+        $this->assertStringContainsString('Style guidance: ' . str_repeat('I', 500), $prompt);
+        $this->assertStringNotContainsString(str_repeat('I', 501), $prompt);
+        $this->assertStringContainsString('About this learner: ' . str_repeat('S', 500), $prompt);
+        $this->assertStringNotContainsString(str_repeat('S', 501), $prompt);
     }
 }

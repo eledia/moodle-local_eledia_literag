@@ -94,16 +94,22 @@ if ($providedkey === '' || !hash_equals($configuredkey, $providedkey)) {
     local_literag_ingest_respond(401, ['status' => 'unauthorized']);
 }
 
-// Route: the trailing path segment (or ?action=) selects upsert vs delete.
+// Route: the trailing path segment (or ?action=) selects health/upsert/delete.
 $pathinfo = (string) ($_SERVER['PATH_INFO'] ?? '');
 $action = '';
-if (preg_match('/(upsert|delete)\/*$/', $pathinfo, $m)) {
+if (preg_match('/(health|upsert|delete)\/*$/', $pathinfo, $m)) {
     $action = $m[1];
-} else if (isset($_GET['action']) && in_array($_GET['action'], ['upsert', 'delete'], true)) {
-    $action = (string) $_GET['action'];
+} else {
+    $requestedaction = optional_param('action', '', PARAM_ALPHA);
+    if (in_array($requestedaction, ['health', 'upsert', 'delete'], true)) {
+        $action = $requestedaction;
+    }
 }
 if ($action === '') {
     local_literag_ingest_respond(404, ['status' => 'unknown_endpoint']);
+}
+if ($action === 'health') {
+    local_literag_ingest_respond(200, ['status' => 'ok']);
 }
 
 // Decode the JSON body.
