@@ -139,17 +139,16 @@ Hash-Bereiche werden nach Entity-Normalisierung korrekt erkannt.
 ### test03 SSRF-Regression fuer Live Moodle Tools
 
 Feature: feat04
-Status:  implemented-not-run
-Datum:   2026-06-26
+Status:  passed
+Datum:   2026-06-27
 
 **Testfall**
 `tutor_chat_test::test_live_tools_use_cfg_wwwroot_not_request_system_url`
 uebergibt `https://evil.example` als `system_url` und erwartet, dass intern
 `$CFG->wwwroot` fuer den `moodle_client` genutzt wird.
 
-**Einschraenkung**
-PHPUnit konnte lokal nicht ausgefuehrt werden, weil `phpunit_dataroot` in
-`config.php` fehlt. Der Test ist angelegt und PHP-gelintet.
+**Ergebnis**
+In der lokalen `local_literag_testsuite` ausgefuehrt und bestanden.
 
 ### test04 Sprachkey-Synchronitaet Deutsch/Englisch
 
@@ -201,7 +200,7 @@ initialisiert ist.
 ### test06 Claude/Moodle-Core-Review-Fix-Verifikation
 
 Feature: feat04 / feat06 / feat07
-Status:  passed-with-phpunit-blocker
+Status:  passed
 Datum:   2026-06-26
 Linked:  task06
 
@@ -227,9 +226,8 @@ docker exec elediaai-moodle-1 php -r 'define("CLI_SCRIPT", true); require "/var/
 PHP/AMD/Map/Sprachkeys/Whitespace sind sauber. Moodle laedt
 `privacy:querylogs`, `tutor_chat` und `privacy\\provider`.
 
-**PHPUnit-Blocker**
-`vendor/bin/phpunit` existiert, aber `php public/admin/tool/phpunit/cli/init.php`
-meldet: `Missing $CFG->phpunit_dataroot in config.php`.
+**PHPUnit**
+Der fruehere lokale PHPUnit-Blocker ist erledigt, siehe `test10`.
 
 ### test07 UX/UI-Review-Triage
 
@@ -283,6 +281,147 @@ docker exec -u www-data elediaai-moodle-1 php /var/www/html/admin/cli/purge_cach
 **Einschraenkung**
 Der lokale Browserpfad nutzt weiterhin die installierte LernHive Shell. Der
 Nicht-Shell-Pfad wurde statisch ueber die CSS-Selektoren abgesichert.
+
+### test09 Moodle Coding Standard
+
+Feature: alle
+Status:  passed
+Datum:   2026-06-27
+
+**Tool**
+`moodlehq/moodle-cs` mit PHP_CodeSniffer 3.13.5, Standards `Moodle` und
+`moodle-extra`.
+
+**Ausgefuehrt**
+
+```bash
+php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED' \
+    $(which phpcs) \
+    --standard=Moodle \
+    --report-full \
+    --ignore='*/vendor/*' \
+    public/local/literag
+
+php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED' \
+    $(which phpcs) \
+    --standard=moodle-extra \
+    --report-full \
+    --ignore='*/vendor/*' \
+    public/local/literag
+
+find public/local/literag -path '*/vendor/*' -prune -o -name '*.php' -print0 \
+    | xargs -0 -n1 php -l
+
+git diff --check -- public/local/literag
+```
+
+**Ergebnis**
+Keine Moodle-CS-Fehler oder -Warnings, keine PHP-Syntaxfehler und keine
+Whitespace-Fehler im Pluginpfad.
+
+### test09b Moodle Plugin Submission Preflight
+
+Feature: alle
+Status:  partially-passed
+Datum:   2026-06-27
+
+**Geprueft nach Skill**
+`moodle-plugin-submit.md`.
+
+**Gruen**
+
+- `version.php` enthaelt korrektes Frankenstyle-Component `local_literag`,
+  Release `0.5.1`, Requires `2024100700`, Supported `[405, 501]`.
+- Privacy API Provider ist vorhanden und deklariert Datenbanktabellen sowie den
+  externen LLM-Provider.
+- `README.md` ist auf Englisch vorhanden; `README.de.md` ist als zweite
+  Sprachfassung vorhanden.
+- `CHANGELOG.md` ist vorhanden und enthaelt den aktuellen Release-Stand.
+- `thirdpartylibs.xml` ist vorhanden und dokumentiert `smalot/pdfparser`.
+- Plugin-PHP besteht `moodle` und `moodle-extra`.
+
+**Direkt behoben**
+
+- `db/upgrade.php` hat nun einen Savepoint fuer `2026061901`.
+- `thirdpartylibs.xml` enthaelt nun einen Copyright-Eintrag.
+- MCP `initialize` meldet nun die installierte Plugin-Release statt hartem
+  `0.1.0`.
+
+**Offen vor echter Submission**
+
+- Worktree muss sauber sein; aktuell gibt es noch lokale DevFlow/Skills-
+  Loeschungen und `.DS_Store`.
+- Repo-Zugriff fuer Moodle-Reviewer klaeren. Die aktuelle GitLab-Remote ist
+  vermutlich nicht oeffentlich.
+- `MATURITY_ALPHA` ist fuer echte Directory-Submission wahrscheinlich noch zu
+  niedrig.
+- Cross-DB-CI-Matrix fuer MariaDB und PostgreSQL ist konfiguriert, ein gruenes
+  Pipeline-Ergebnis steht noch aus.
+- Submission-ZIP muss aus einem sauberen Commit gebaut werden; wegen Dirty
+  Worktree wurde kein Release-ZIP erzeugt.
+
+### test10 Lokale PHPUnit Testsuite
+
+Feature: alle
+Status:  passed-with-deprecations
+Datum:   2026-06-27
+Linked:  q01
+
+**Ausgefuehrt**
+
+```bash
+docker exec elediaai-moodle-1 sh -lc \
+    'php /var/www/html/public/admin/tool/phpunit/cli/init.php'
+
+docker exec elediaai-moodle-1 sh -lc \
+    'cd /var/www/html && vendor/bin/phpunit --testsuite local_literag_testsuite'
+```
+
+**Umgebung**
+Moodle 5.2.1, PHP 8.4.22, MariaDB 11.4.11, PHPUnit 11.5.55.
+
+**Ergebnis**
+`57 / 57` Tests bestanden, `188` Assertions, Exit-Code `0`. Nach Deployment des
+aktuellen lokalen Pluginstands in `elediaai-moodle-1` erneut ausgefuehrt und
+bestanden.
+
+**Hinweis**
+PHPUnit meldete `9` Test-Runner-Deprecations. Ursache sind Docblock-Metadaten
+in den Testklassen `agent_test`, `chunker_test`, `dispatcher_test`,
+`document_store_test`, `permission_filter_test`, `prompt_builder_test`,
+`retriever_test`, `token_validator_test` und `tutor_chat_test`. Diese sind kein
+Test-Fail, sollten aber vor PHPUnit 12 auf Attribute migriert werden.
+
+### test11 CI Cross-DB PHPUnit Matrix
+
+Feature: alle
+Status:  configured-awaiting-run
+Datum:   2026-06-27
+
+**Ziel**
+Submission-faehiger Cross-DB-Nachweis fuer MariaDB/MySQL und PostgreSQL.
+
+**Umsetzung**
+Der GitLab-Job `phpunit_moodle` nutzt nun eine `parallel:matrix` mit:
+
+- `DB_TYPE=pgsql`, Service `postgres:${POSTGRES_VERSION}`.
+- `DB_TYPE=mariadb`, Service `mariadb:11.4`.
+
+Der Job schreibt `config.php` aus den Matrix-Variablen, installiert sowohl
+PostgreSQL- als auch MySQL-PHP-Extensions und fuehrt dieselbe
+`local_literag_testsuite` gegen beide Datenbanken aus. Echte PHPUnit-Fehler
+werden nicht mehr mit `|| true` verschluckt.
+
+**Geprueft**
+
+```bash
+ruby -e 'require "yaml"; YAML.load_file(".gitlab-ci.yml"); puts "YAML_OK"'
+git diff --check -- .gitlab-ci.yml
+```
+
+**Noch ausstehend**
+Ein gruener GitLab-Pipeline-Lauf mit beiden Matrix-Jobs ist der eigentliche
+Cross-DB-Nachweis fuer Reviewer.
 
 ---
 

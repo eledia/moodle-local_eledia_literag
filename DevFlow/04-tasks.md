@@ -15,7 +15,7 @@ Unstrukturierter Input landet hier und wird in `taskXX` oder `qXX` triagiert.
 ### q01 PHPUnit-Setup im lokalen Container
 Linked: test01 / test03 / test06
 Asked-by: KI
-Status: open
+Status: resolved
 
 **Frage**
 Soll im lokalen Moodle-Container PHPUnit eingerichtet werden, oder laufen Tests
@@ -26,6 +26,11 @@ Am 2026-06-26 ist `vendor/bin/phpunit` im Container vorhanden, aber
 `php public/admin/tool/phpunit/cli/init.php` bricht ab, weil
 `$CFG->phpunit_dataroot` in `config.php` fehlt. Dadurch konnten neue PHPUnit-
 Tests nur gelintet, aber nicht ausgefuehrt werden.
+
+**Aufloesung**
+Am 2026-06-27 wurde die PHPUnit-Testumgebung im Container
+`elediaai-moodle-1` erfolgreich initialisiert und
+`local_literag_testsuite` lokal ausgefuehrt.
 
 ---
 

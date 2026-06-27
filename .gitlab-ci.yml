@@ -218,18 +218,36 @@ phpunit_moodle:
   stage: test
   image: "php:${PHP_VERSION}-cli"
   services:
-    - name: "postgres:${POSTGRES_VERSION}"
+    - name: "$DB_SERVICE_IMAGE"
+      alias: db
+
+  parallel:
+    matrix:
+      - DB_TYPE: "pgsql"
+        DB_SERVICE_IMAGE: "postgres:16"
+        DB_HOST: "db"
+        DB_NAME: "moodle"
+        DB_USER: "moodle"
+        DB_PASS: "moodle"
+        POSTGRES_DB: "moodle"
+        POSTGRES_USER: "moodle"
+        POSTGRES_PASSWORD: "moodle"
+      - DB_TYPE: "mariadb"
+        DB_SERVICE_IMAGE: "mariadb:11.4"
+        DB_HOST: "db"
+        DB_NAME: "moodle"
+        DB_USER: "moodle"
+        DB_PASS: "moodle"
+        MYSQL_DATABASE: "moodle"
+        MYSQL_USER: "moodle"
+        MYSQL_PASSWORD: "moodle"
+        MYSQL_ROOT_PASSWORD: "moodle"
 
   variables:
-    POSTGRES_DB: "moodle"
-    POSTGRES_USER: "moodle"
-    POSTGRES_PASSWORD: "moodle"
-    DB_HOST: "postgres"
+    DB_HOST: "db"
 
   # GitLab picks the number from this log line
   coverage: '/PHPUNIT_COVERAGE:\s+([0-9.]+)%/'
-
-  allow_failure: true
 
   script:
     - |
@@ -237,7 +255,7 @@ phpunit_moodle:
       # System dependencies + locales
       # ---------------------------
       apt-get update
-      apt-get install -y git unzip curl locales libzip-dev libpng-dev libicu-dev libpq-dev
+      apt-get install -y git unzip curl locales libzip-dev libpng-dev libicu-dev libpq-dev default-mysql-client
 
       # Required locales for Moodle PHPUnit
       sed -i '/en_AU.UTF-8/s/^# //g' /etc/locale.gen || echo "en_AU.UTF-8 UTF-8" >> /etc/locale.gen
@@ -248,7 +266,7 @@ phpunit_moodle:
       # ---------------------------
       # PHP extensions
       # ---------------------------
-      docker-php-ext-install zip gd intl pgsql pdo_pgsql
+      docker-php-ext-install zip gd intl mysqli pdo_mysql pgsql pdo_pgsql
 
       pecl install xdebug
       docker-php-ext-enable xdebug
@@ -292,12 +310,12 @@ phpunit_moodle:
       cat > /tmp/moodle/config.php <<'PHP'
       <?php
       unset($CFG); global $CFG; $CFG = new stdClass();
-      $CFG->dbtype    = 'pgsql';
+      $CFG->dbtype    = getenv('DB_TYPE') ?: 'pgsql';
       $CFG->dblibrary = 'native';
       $CFG->dbhost    = getenv('DB_HOST');
-      $CFG->dbname    = getenv('POSTGRES_DB');
-      $CFG->dbuser    = getenv('POSTGRES_USER');
-      $CFG->dbpass    = getenv('POSTGRES_PASSWORD');
+      $CFG->dbname    = getenv('DB_NAME');
+      $CFG->dbuser    = getenv('DB_USER');
+      $CFG->dbpass    = getenv('DB_PASS');
       $CFG->prefix    = 'mdl_';
       $CFG->dboptions = ['dbpersist'=>0,'dbport'=>'','dbsocket'=>''];
       $CFG->wwwroot   = 'http://localhost';
@@ -329,6 +347,7 @@ phpunit_moodle:
       # ---------------------------
       # Install DB + init PHPUnit (root or public/admin/)
       # ---------------------------
+      echo "Running PHPUnit setup for DB_TYPE=${DB_TYPE} on ${DB_HOST}"
       if [ -f /tmp/moodle/admin/cli/install_database.php ]; then
         php /tmp/moodle/admin/cli/install_database.php --agree-license --adminpass=Pass123!
       elif [ -f /tmp/moodle/public/admin/cli/install_database.php ]; then
@@ -357,7 +376,7 @@ phpunit_moodle:
         --coverage-text=/tmp/moodle/coverage.txt \
         --coverage-clover=/tmp/moodle/coverage.xml \
         --log-junit=/tmp/moodle/junit.xml \
-        --testdox || true
+        --testdox
 
       cd "$CI_PROJECT_DIR"
 

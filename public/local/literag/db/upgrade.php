@@ -54,5 +54,11 @@ function xmldb_local_literag_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026061900, 'local', 'literag');
     }
 
+    if ($oldversion < 2026061901) {
+        // No schema changes. Keep the upgrade savepoint aligned with the release
+        // version used for the review branch.
+        upgrade_plugin_savepoint(true, 2026061901, 'local', 'literag');
+    }
+
     return true;
 }

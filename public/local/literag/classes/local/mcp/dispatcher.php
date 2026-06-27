@@ -61,7 +61,7 @@ class dispatcher {
             return result::success($id, [
                 'protocolVersion' => self::PROTOCOL_VERSION,
                 'capabilities' => ['tools' => new \stdClass()],
-                'serverInfo' => ['name' => 'local_literag', 'version' => '0.1.0'],
+                'serverInfo' => ['name' => 'local_literag', 'version' => $this->server_version()],
             ]);
         }
         if ($method === 'tools/list') {
@@ -114,6 +114,19 @@ class dispatcher {
         }
         $class = $map[$name];
         return new $class();
+    }
+
+    /**
+     * Get the installed plugin release for MCP discovery metadata.
+     *
+     * @return string
+     */
+    private function server_version(): string {
+        $plugininfo = \core_plugin_manager::instance()->get_plugin_info('local_literag');
+        if ($plugininfo !== null && $plugininfo->release !== null && $plugininfo->release !== '') {
+            return (string) $plugininfo->release;
+        }
+        return (string) get_config('local_literag', 'version');
     }
 
     /**
