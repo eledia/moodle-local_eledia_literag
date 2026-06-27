@@ -1,4 +1,4 @@
-.lr-admin-settings-shell-page {
+#page-admin-setting-local_literag {
     --lr-settings-primary: var(--lh-primary, #194866);
     --lr-settings-primary-dark: var(--lh-primary-dark, #0f2b3d);
     --lr-settings-primary-light: var(--lh-primary-light, #f3f5f8);
@@ -11,6 +11,41 @@
 
 #page-admin-setting-local_literag #adminsettings {
     max-width: var(--lh-page-max-default, 72rem);
+}
+
+#page-admin-setting-local_literag:not(.lr-admin-settings-shell-page) #region-main {
+    background: transparent;
+    border: 0;
+}
+
+#page-admin-setting-local_literag:not(.lr-admin-settings-shell-page) #adminsettings {
+    background: #fff;
+    border: 1px solid var(--lr-settings-border);
+    border-radius: var(--lr-settings-radius);
+    box-shadow: var(--lr-settings-shadow);
+    margin: 0 auto;
+    overflow: hidden;
+    padding: 1rem 1.25rem 0.25rem;
+}
+
+#page-admin-setting-local_literag:not(.lr-admin-settings-shell-page) #adminsettings fieldset {
+    border: 0;
+    margin: 0;
+    min-width: 0;
+    padding: 0;
+}
+
+#page-admin-setting-local_literag:not(.lr-admin-settings-shell-page) #adminsettings h2,
+#page-admin-setting-local_literag:not(.lr-admin-settings-shell-page) #adminsettings h3.main {
+    color: var(--lr-settings-primary-dark);
+}
+
+#page-admin-setting-local_literag:not(.lr-admin-settings-shell-page) #adminsettings .formsettingheading {
+    color: var(--lr-settings-text);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0.85rem 0 0.25rem;
 }
 
 .lr-admin-settings-shell #adminsettings {

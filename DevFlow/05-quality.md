@@ -61,7 +61,7 @@ ausfuehrbar, siehe `q01`.
 
 Feature:  feat05
 Severity: S2
-Status:   open
+Status:   fixed
 Linked:   task08, test07
 
 **Beschreibung**
@@ -73,6 +73,13 @@ kein Plugin-spezifisches CSS.
 **Erwarteter Fix**
 Ein schlankes Fallback-Styling fuer den Nicht-Shell-Pfad ergaenzen, damit die
 Settings auch ohne LernHive optisch geordnet und plugin-spezifisch wirken.
+
+**Fix**
+`styles.css` definiert die LiteRAG-Settings-Variablen nun auf
+`#page-admin-setting-local_literag` und stylt den Nicht-Shell-Pfad ueber
+`#page-admin-setting-local_literag:not(.lr-admin-settings-shell-page)`. Dadurch
+erhaelt das rohe Moodle-Admin-Formular ohne `local_lernhive` einen eigenen
+Rahmen, passende Abstaende und konsistente Heading-/Form-Optik.
 
 ### bug05 Shell-Navigation und CSS sind stark an `lh-*` Klassen gekoppelt
 
@@ -248,6 +255,34 @@ Keine kritischen Befunde. Als offene Arbeit uebernommen wurden:
 **Bewertung**
 Die aktuelle Shell-UI mit `local_lernhive` bleibt nutzbar. Der wichtigste offene
 UX-Schritt ist der Nicht-Shell-Fallback.
+
+### test08 Nicht-Shell-Fallback-CSS
+
+Feature: feat05
+Status:  passed-static
+Datum:   2026-06-27
+Linked:  task08, bug04
+
+**Geprueft**
+
+- LiteRAG-Settings-Variablen sind auf `#page-admin-setting-local_literag`
+  definiert und damit unabhaengig vom JS-gesetzten Shell-Body-State.
+- Nicht-Shell-Regeln greifen nur fuer
+  `#page-admin-setting-local_literag:not(.lr-admin-settings-shell-page)`.
+- Shell-Regeln bleiben unveraendert an `.lr-admin-settings-shell` bzw.
+  `.lr-admin-settings-shell-page` gebunden.
+
+**Ausgefuehrt**
+
+```bash
+git diff --check -- public/local/literag/styles.css DevFlow/04-tasks.md DevFlow/05-quality.md
+rg -n "[^\\x00-\\x7F]" DevFlow/04-tasks.md DevFlow/05-quality.md
+docker exec -u www-data elediaai-moodle-1 php /var/www/html/admin/cli/purge_caches.php
+```
+
+**Einschraenkung**
+Der lokale Browserpfad nutzt weiterhin die installierte LernHive Shell. Der
+Nicht-Shell-Pfad wurde statisch ueber die CSS-Selektoren abgesichert.
 
 ---
 

@@ -143,7 +143,7 @@ aktuellen Branch-/Review-Status, den PHPUnit-Blocker, Prompt-Limits und die
 Verifikationsschritte.
 
 ### task08 UX/UI-Review vom 2026-06-26 triagieren
-Status:    open
+Status:    in-progress
 Feature:   feat05
 Prioritaet: P1
 Linked:    bug04, bug05, test07
@@ -165,6 +165,11 @@ bedienbar, hat aber nur rohes Moodle-Admin-Styling.
 - Optional AMD-Modul auf aktuelles Moodle-Pattern und Logging pruefen.
 - Unbenutzten Sprachstring `confirm_sent` pruefen: entfernen oder
   Verwendungsort dokumentieren.
+
+**Stand 2026-06-27**
+`bug04` ist umgesetzt: Der Nicht-Shell-Pfad erhaelt ein schlankes
+Fallback-Styling ueber `#page-admin-setting-local_literag`. `bug05` bleibt als
+Shell-Kopplungs-/Wartungsthema offen.
 
 **Nicht im Scope dieses Tasks**
 Der Review enthaelt keine Anforderung, eine harte Dependency auf
