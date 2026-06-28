@@ -137,3 +137,30 @@ Aktueller lokaler Stand vom 2026-06-28:
 - Behat hat im Pluginpfad keine `.feature`-Dateien; es gibt daher noch keine
   echte Behat-Abdeckung.
 - Coverage wurde lokal nicht erzeugt, weil im Container kein Xdebug geladen ist.
+
+---
+
+## Release und GitHub Flat Mirror
+
+Das GitLab-Repository bleibt als Moodle-Root-Struktur organisiert
+(`public/local/literag`). Fuer GitHub und moodle.org wird der Pluginpfad flach
+gespiegelt, sodass `version.php`, `classes/`, `db/`, `.github/` usw. am
+Repository-Root liegen.
+
+Der manuelle GitLab-CI-Job `mirror_github_flat` baut diesen flachen Baum aus
+`PLUGIN_PATH` und pusht ihn per Force-Push in das GitHub-Ziel aus den CI/CD-
+Variablen:
+
+- `GITHUB_MIRROR_URL`
+- `GITHUB_MIRROR_TOKEN`
+- optional `GITHUB_MIRROR_BRANCH`
+
+Release-ZIPs fuer die Moodle Plugin Database werden aus dem Pluginverzeichnis
+gebaut:
+
+```bash
+cd public/local/literag
+./bin/release.sh /tmp
+```
+
+Das ZIP enthaelt genau einen Top-Level-Ordner `literag/`.

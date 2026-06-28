@@ -294,6 +294,30 @@ werden, weil `phpcs` aktuell nicht installiert/auffindbar ist.
 `local_literag_testsuite` lief anschliessend erfolgreich durch: 57 Tests,
 188 Assertions, Exit-Code 0, mit 9 bekannten PHPUnit-Deprecations.
 
+### test15 Release-ZIP und GitHub Flat Mirror
+
+Feature: alle
+Status:  pending
+Datum:   2026-06-28
+
+**Ziel**
+GitHub soll einen flachen Pluginbaum erhalten und die Moodle Plugin Database ein
+sauberes ZIP mit Top-Level-Ordner `literag/`.
+
+**Soll geprueft werden**
+
+```bash
+bash -n public/local/literag/bin/release.sh
+ruby -e 'require "yaml"; YAML.load_file(".gitlab-ci.yml")'
+cd public/local/literag && ./bin/release.sh /tmp
+```
+
+**Erwartung**
+Der GitLab-CI-Job `mirror_github_flat` kann nach Konfiguration von
+`GITHUB_MIRROR_URL` und `GITHUB_MIRROR_TOKEN` manuell gestartet werden. Das ZIP
+enthaelt keine `.git/`, `node_modules/`, `.DS_Store`, `.idea/`, `.vscode/`,
+`.github/` oder `bin/`-Pfade und enthaelt `literag/version.php`.
+
 ### test08 Nicht-Shell-Fallback-CSS
 
 Feature: feat05
