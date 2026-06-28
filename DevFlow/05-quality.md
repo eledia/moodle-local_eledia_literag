@@ -297,7 +297,7 @@ werden, weil `phpcs` aktuell nicht installiert/auffindbar ist.
 ### test15 Release-ZIP und GitHub Flat Mirror
 
 Feature: alle
-Status:  pending
+Status:  passed
 Datum:   2026-06-28
 
 **Ziel**
@@ -317,6 +317,12 @@ Der GitLab-CI-Job `mirror_github_flat` kann nach Konfiguration von
 `GITHUB_MIRROR_URL` und `GITHUB_MIRROR_TOKEN` manuell gestartet werden. Das ZIP
 enthaelt keine `.git/`, `node_modules/`, `.DS_Store`, `.idea/`, `.vscode/`,
 `.github/` oder `bin/`-Pfade und enthaelt `literag/version.php`.
+
+**Ergebnis 2026-06-28**
+`release.sh` wurde erfolgreich ausgefuehrt. Das ZIP liegt unter
+`/Users/moskaliuk/Documents/Code/literag-0.5.1.zip`, hat den Top-Level-Ordner
+`literag/`, enthaelt `literag/version.php` und der Forbidden-Path-Scan ist
+sauber. YAML-Parsing fuer GitLab CI und GitHub Workflows ist gruen.
 
 ### test08 Nicht-Shell-Fallback-CSS
 
