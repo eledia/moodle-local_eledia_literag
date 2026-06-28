@@ -85,7 +85,7 @@ Rahmen, passende Abstaende und konsistente Heading-/Form-Optik.
 
 Feature:  feat05
 Severity: S3
-Status:   open
+Status:   accepted-risk
 Linked:   task08, test07
 
 **Beschreibung**
@@ -99,6 +99,11 @@ Moodle-Seitenankern.
 `sectionnav()` nur ueber `context()` nutzbar machen oder dokumentieren, dass sie
 nur bei `is_available() === true` verwendet werden darf. CSS-Regeln bevorzugt
 ueber `#page-admin-setting-local_literag` bzw. `.path-local-literag` ankern.
+
+**Stand 2026-06-28**
+Der aktuelle Produktionspfad nutzt `sectionnav()` nur im Shell-Kontext und ist
+mit `local_lernhive` getestet. Die restliche Kopplung ist ein Wartungsthema,
+aber kein Release-Blocker fuer den Review-Branch.
 
 ---
 
@@ -364,7 +369,7 @@ Datum:   2026-06-27
 
 Feature: alle
 Status:  passed-with-deprecations
-Datum:   2026-06-27
+Datum:   2026-06-28
 Linked:  q01
 
 **Ausgefuehrt**
@@ -382,8 +387,8 @@ Moodle 5.2.1, PHP 8.4.22, MariaDB 11.4.11, PHPUnit 11.5.55.
 
 **Ergebnis**
 `57 / 57` Tests bestanden, `188` Assertions, Exit-Code `0`. Nach Deployment des
-aktuellen lokalen Pluginstands in `elediaai-moodle-1` erneut ausgefuehrt und
-bestanden.
+aktuellen lokalen Pluginstands in `elediaai-moodle-1` erneut am 2026-06-28
+ausgefuehrt und bestanden.
 
 **Hinweis**
 PHPUnit meldete `9` Test-Runner-Deprecations. Ursache sind Docblock-Metadaten
@@ -391,6 +396,57 @@ in den Testklassen `agent_test`, `chunker_test`, `dispatcher_test`,
 `document_store_test`, `permission_filter_test`, `prompt_builder_test`,
 `retriever_test`, `token_validator_test` und `tutor_chat_test`. Diese sind kein
 Test-Fail, sollten aber vor PHPUnit 12 auf Attribute migriert werden.
+
+### test12 LernHive Support-Handbuch
+
+Feature: feat05
+Status:  passed
+Datum:   2026-06-28
+Linked:  task09
+
+**Ausgefuehrt**
+
+```bash
+docker cp public/local/literag/docs elediaai-moodle-1:/var/www/html/public/local/literag/
+docker exec -u www-data elediaai-moodle-1 php -r 'define("CLI_SCRIPT", true); require "/var/www/html/config.php"; ...'
+```
+
+**Ergebnis**
+`local_literag` wird vom LernHive Support Hub gefunden, `has_handbook` ist true,
+die Sprache ist `de` und die Summary wird aus `## User value` extrahiert.
+
+### test13 Finaler lokaler Plugin-Check
+
+Feature: alle
+Status:  passed-with-notes
+Datum:   2026-06-28
+Linked:  task10
+
+**Ausgefuehrt**
+
+```bash
+find public/local/literag -path '*/vendor/*' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l
+node --check public/local/literag/amd/src/settings_shell.js
+node --check public/local/literag/amd/build/settings_shell.min.js
+node -e "JSON.parse(require('fs').readFileSync('public/local/literag/amd/build/settings_shell.min.js.map','utf8'))"
+comm -3 <(sed -n "s/^\$string\['\([^']*\)'\].*/\1/p" public/local/literag/lang/en/local_literag.php | sort) \
+        <(sed -n "s/^\$string\['\([^']*\)'\].*/\1/p" public/local/literag/lang/de/local_literag.php | sort)
+git diff --check
+phpcs --standard=Moodle --ignore='*/vendor/*' --extensions=php public/local/literag
+docker exec -u www-data -w /var/www/html elediaai-moodle-1 php public/admin/tool/phpunit/cli/init.php
+docker exec -u www-data -w /var/www/html elediaai-moodle-1 php vendor/bin/phpunit --testsuite local_literag_testsuite
+```
+
+**Ergebnis**
+
+- PHP-Lint, AMD, Source-Map, Sprachkeys und Whitespace sind gruen.
+- Moodle-CS ist gruen.
+- PHPUnit ist gruen: 57 Tests, 188 Assertions.
+- Behat hat keine Plugin-Features (`public/local/literag/tests/behat` fehlt).
+- Lokale Coverage wurde nicht erzeugt, weil im Docker-Container kein Xdebug
+  geladen ist.
+- Worktree ist nicht sauber wegen bereits vorhandenen `DevFlow/Skills`-
+  Loeschungen und `DevFlow/.DS_Store`.
 
 ### test11 CI Cross-DB PHPUnit Matrix
 

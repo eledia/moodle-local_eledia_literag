@@ -7,9 +7,9 @@
 
 ## 1. Projekt-Meta
 
-- **Name:** LiteRAG (`local_literag`)
+- **Name:** eLeDia.ai LiteRAG (`local_literag`)
 - **Arbeitsbranch:** `review_johannes`
-- **Letztes DevFlow-Update:** 2026-06-26
+- **Letztes DevFlow-Update:** 2026-06-28
 - **Ziel:** Moodle-natives RAG-Backend ohne Embeddings, das Kursinhalte
   entgegennimmt, permission-sicher durchsucht und Tutor-Antworten ueber ein
   OpenAI-kompatibles LLM erzeugt.
@@ -31,11 +31,10 @@
 1. Dieses Dokument lesen.
 2. `04-tasks.md` lesen und offene `taskXX`/`qXX` identifizieren.
 3. Passende Feature-Definition in `01-features.md` lesen.
-4. Bei Moodle-Themen `Skills/moodle-framework.md` und `Skills/moodle-dev.md`
-   konsultieren.
-5. Bei UI/Accessibility-Themen `Skills/eledia-moodle-ux.md`,
-   `Skills/moodle-design-system.md` und `Skills/webui-accessibility-auditor.md`
-   konsultieren.
+4. Bei Moodle-Themen die DevFlow-Skills nur nutzen, wenn `DevFlow/Skills/`
+   im Worktree vorhanden ist; aktuell sind diese Dateien lokal geloescht.
+5. Bei UI/Accessibility-Themen die LernHive/eLeDia.ai Tutor Shell als
+   Referenz verwenden.
 6. Sicherheitsrelevante Aenderungen immer gegen `05-quality.md` spiegeln.
 7. Keine impliziten Produktentscheidungen treffen. Unklarheiten als `qXX` in
    `04-tasks.md` erfassen.
@@ -135,9 +134,26 @@ ohne Shell funktioniert, dann aber nur das rohe Moodle-Admin-Formular zeigt.
 
 **Entscheidung**
 Die LernHive/eLeDia.ai Shell bleibt optional. Der Shell-Pfad darf nur geladen
-werden, wenn `local_lernhive` verfuegbar ist. Fuer den Nicht-Shell-Fall wird ein
-eigenes, schlankes Fallback-Styling als offener UX-Task gefuehrt.
+werden, wenn `local_lernhive` verfuegbar ist. Fuer den Nicht-Shell-Fall gibt es
+ein schlankes Fallback-Styling.
 
 **Folgen**
 Keine harte Plugin-Abhaengigkeit in `version.php`. UX-Arbeit muss beide Pfade
 pruefen: mit Shell und ohne `local_lernhive`.
+
+### adr05 LernHive-Handbuch lebt im Plugin unter `docs/`
+
+**Status:** accepted
+
+**Kontext**
+Der LernHive Support Hub liest Handbuecher aus `docs/02-user-doc.md` und
+optional lokalisiert aus `docs/02-user-doc.de.md`.
+
+**Entscheidung**
+LiteRAG liefert ein eigenes deutsches und englisches Handbuch unter
+`public/local/literag/docs/`.
+
+**Folgen**
+`/local/lernhive/support.php?component=local_literag` zeigt ein echtes
+Handbuch statt eines Pending-Zustands. Die erste Kurzbeschreibung wird aus dem
+Abschnitt `## User value` extrahiert.

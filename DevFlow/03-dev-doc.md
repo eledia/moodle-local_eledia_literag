@@ -117,7 +117,11 @@ vendor/bin/phpunit public/local/literag/tests/tutor_chat_test.php
 vendor/bin/phpcs --standard=moodle public/local/literag
 ```
 
-Hinweis: In der aktuellen lokalen Docker-Instanz ist `vendor/bin/phpunit`
-vorhanden, aber `php admin/tool/phpunit/cli/init.php` bricht ab, weil
-`$CFG->phpunit_dataroot` in `config.php` fehlt. PHP-Lint und Moodle-CLI-Smoke
-wurden ersatzweise genutzt.
+Aktueller lokaler Stand vom 2026-06-28:
+
+- `local_literag_testsuite`: 57 Tests, 188 Assertions, Exit-Code 0.
+- PHPUnit meldet 9 Deprecations wegen alter Docblock-Metadaten.
+- Moodle-CS (`Moodle`, ohne `vendor/`) ist lokal gruen.
+- Behat hat im Pluginpfad keine `.feature`-Dateien; es gibt daher noch keine
+  echte Behat-Abdeckung.
+- Coverage wurde lokal nicht erzeugt, weil im Container kein Xdebug geladen ist.

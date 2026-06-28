@@ -5,13 +5,14 @@ Projektbezogener DevFlow fuer `local_literag`, angelegt nach dem Muster aus
 
 ## Aktueller Stand
 
-- **Datum:** 2026-06-26
+- **Datum:** 2026-06-28
 - **Branch:** `review_johannes`
-- **Status:** Claude/Moodle-Core-Review-Befunde sind im Code adressiert.
-  UX/UI-Review vom 2026-06-26 ist gesichtet und als Fallback-/Shell-Backlog im
-  DevFlow dokumentiert.
-- **Blocker:** PHPUnit kann lokal noch nicht laufen, weil
-  `$CFG->phpunit_dataroot` in der Moodle-`config.php` fehlt.
+- **Status:** Review-Befunde, Shell-UX, Fallback-Styling, Display-Name und
+  LernHive-Handbuch sind umgesetzt. Lokale PHPUnit- und Moodle-CS-Checks sind
+  gruen.
+- **Blocker:** Keine Code-Blocker im Pluginpfad. Behat hat derzeit keine
+  Plugin-Features; DevFlow/Skills-Loeschungen und `.DS_Store` muessen vor
+  einem finalen Push/Release bereinigt oder bewusst bestaetigt werden.
 
 ## Einstieg
 
@@ -31,4 +32,4 @@ Projektbezogener DevFlow fuer `local_literag`, angelegt nach dem Muster aus
 | `03-dev-doc.md` | Technische Ist-Dokumentation |
 | `04-tasks.md` | Operative Tasks und offene Fragen |
 | `05-quality.md` | Bugs, Tests und Verifikation |
-| `Skills/` | Wiederverwendbares Moodle-/UX-/QA-Wissen aus eLeDia.OS_DevFlow |
+| `Skills/` | Wiederverwendbares Moodle-/UX-/QA-Wissen aus eLeDia.OS_DevFlow; aktuell im Worktree geloescht |

@@ -28,7 +28,8 @@ angebundenen eLeDia.ai Tutor-Landschaft.
 
 ### LiteRAG konfigurieren (`feat05`)
 
-1. `Site administration -> Plugins -> Local plugins -> LiteRAG` oeffnen.
+1. `Site administration -> Plugins -> Local plugins -> eLeDia.ai LiteRAG`
+   oeffnen.
 2. In der Shell den passenden Bereich waehlen:
    - Verbindung
    - LLM
@@ -45,8 +46,16 @@ anspringbar.
 
 **Fallback ohne LernHive**
 Wenn `local_lernhive` nicht installiert ist, laedt LiteRAG keine Shell und keine
-Shell-Navigation. Die Settings bleiben als Moodle-Admin-Formular bedienbar. Ein
-eigenes minimales LiteRAG-Fallback-Styling ist als UX-Backlog erfasst.
+Shell-Navigation. Die Settings bleiben als Moodle-Admin-Formular bedienbar und
+erhalten ein schlankes LiteRAG-Fallback-Styling.
+
+### Handbuch im LernHive Support Hub
+
+Die Hilfe ist unter
+`/local/lernhive/support.php?component=local_literag` verfuegbar, wenn
+`local_lernhive` installiert ist. Die deutsche Version wird aus
+`docs/02-user-doc.de.md` geladen, die englische Fassung aus
+`docs/02-user-doc.md`.
 
 ### Ingest-Endpunkt verbinden (`feat01`)
 

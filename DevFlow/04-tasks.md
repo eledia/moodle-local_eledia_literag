@@ -148,7 +148,7 @@ aktuellen Branch-/Review-Status, den PHPUnit-Blocker, Prompt-Limits und die
 Verifikationsschritte.
 
 ### task08 UX/UI-Review vom 2026-06-26 triagieren
-Status:    in-progress
+Status:    done
 Feature:   feat05
 Prioritaet: P1
 Linked:    bug04, bug05, test07
@@ -171,11 +171,47 @@ bedienbar, hat aber nur rohes Moodle-Admin-Styling.
 - Unbenutzten Sprachstring `confirm_sent` pruefen: entfernen oder
   Verwendungsort dokumentieren.
 
-**Stand 2026-06-27**
+**Stand 2026-06-28**
 `bug04` ist umgesetzt: Der Nicht-Shell-Pfad erhaelt ein schlankes
-Fallback-Styling ueber `#page-admin-setting-local_literag`. `bug05` bleibt als
-Shell-Kopplungs-/Wartungsthema offen.
+Fallback-Styling ueber `#page-admin-setting-local_literag`. Die
+Shell-Navigation nutzt die eLeDia.ai Tutor Navigation, die rechte Moodle-
+Blockleiste wird auf der LiteRAG-Settingsseite ausgeblendet und der sichtbare
+Pluginname lautet `eLeDia.ai LiteRAG`. `bug05` bleibt als Low-Risk-
+Wartungshinweis dokumentiert, blockiert aber den Review-Stand nicht.
 
 **Nicht im Scope dieses Tasks**
 Der Review enthaelt keine Anforderung, eine harte Dependency auf
 `local_lernhive` einzufuehren.
+
+### task09 LernHive-Handbuch fuer LiteRAG anlegen
+Status:    done
+Feature:   feat05
+Prioritaet: P2
+Linked:    test12
+
+**Ziel**
+`/local/lernhive/support.php?component=local_literag` soll wie das Tutor-
+Handbuch echte Hilfeinhalte zeigen.
+
+**Ergebnis**
+`public/local/literag/docs/02-user-doc.de.md` und
+`public/local/literag/docs/02-user-doc.md` sind angelegt. Der LernHive
+Support Hub findet `local_literag`, laedt die deutsche Fassung und extrahiert
+eine Kurzbeschreibung aus `## User value`.
+
+### task10 Finaler Plugin-Check vor Review-Push
+Status:    done
+Feature:   alle
+Prioritaet: P1
+Linked:    test13
+
+**Ziel**
+Vor dem finalen Push klaeren, ob PHPUnit, Moodle-CS, Behat, DevFlow und
+Worktree-Hygiene passen.
+
+**Ergebnis**
+PHPUnit und Moodle-CS sind lokal gruen. Behat hat derzeit keine Plugin-Features
+und bietet daher keine echte Abdeckung. DevFlow ist auf den Stand vom
+2026-06-28 aktualisiert. Offen bleiben Worktree-Hygiene
+(`DevFlow/Skills`-Loeschungen, `.DS_Store`), fehlende lokale Coverage ohne
+Xdebug und ein gruener GitLab-Cross-DB-Lauf als externer Nachweis.
