@@ -82,6 +82,20 @@
     padding-top: 0;
 }
 
+#page-admin-setting-local_literag #block-region-side-pre,
+#page-admin-setting-local_literag #block-region-side-post,
+#page-admin-setting-local_literag [data-region="blocks-column"],
+#page-admin-setting-local_literag [data-region="right-hand-drawer"],
+#page-admin-setting-local_literag .drawer-right,
+#page-admin-setting-local_literag .drawer-toggler.drawer-right-toggle {
+    display: none !important;
+}
+
+#page-admin-setting-local_literag #page.drawers,
+#page-admin-setting-local_literag #page.drawers.show-drawer-right {
+    margin-right: 0;
+}
+
 #page-admin-setting-local_literag #adminsettings h3.main {
     background: transparent;
     border: 0;
