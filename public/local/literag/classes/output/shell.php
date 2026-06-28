@@ -31,6 +31,16 @@ use moodle_url;
  * Builds the shared LernHive Plugin Shell context for LiteRAG.
  */
 final class shell {
+    /**
+     * Optional eLeDia.ai Tutor shell classes, newest component name first.
+     *
+     * @var string[]
+     */
+    private const TUTOR_SHELL_CLASSES = [
+        '\\block_eledia_aitutor\\output\\shell',
+        '\\block_elediaaitutor\\output\\shell',
+    ];
+
     /** @var string Settings section key. */
     public const ACTIVE_SETTINGS = 'settings';
 
@@ -53,7 +63,9 @@ final class shell {
         global $PAGE;
 
         $PAGE->requires->css('/local/literag/styles.css');
-        if (self::has_tutor_navigation()) {
+        if (class_exists('\\block_eledia_aitutor\\output\\shell')) {
+            $PAGE->requires->css('/blocks/eledia_aitutor/styles.css');
+        } else if (class_exists('\\block_elediaaitutor\\output\\shell')) {
             $PAGE->requires->css('/blocks/elediaaitutor/styles.css');
         }
         if (self::is_available()) {
@@ -97,8 +109,9 @@ final class shell {
      * @return string Raw HTML for the Plugin Shell `sectionnav` slot.
      */
     public static function sectionnav(string $active): string {
-        if (self::has_tutor_navigation()) {
-            return \block_elediaaitutor\output\shell::sectionnav(self::TUTOR_ACTIVE_LITERAG);
+        $tutorshell = self::tutor_shell_class();
+        if ($tutorshell !== null) {
+            return $tutorshell::sectionnav(self::TUTOR_ACTIVE_LITERAG);
         }
 
         $attrs = [
@@ -129,8 +142,13 @@ final class shell {
      *
      * @return bool
      */
-    private static function has_tutor_navigation(): bool {
-        return class_exists('\block_elediaaitutor\output\shell')
-            && method_exists('\block_elediaaitutor\output\shell', 'sectionnav');
+    private static function tutor_shell_class(): ?string {
+        foreach (self::TUTOR_SHELL_CLASSES as $class) {
+            if (class_exists($class) && method_exists($class, 'sectionnav')) {
+                return $class;
+            }
+        }
+
+        return null;
     }
 }
