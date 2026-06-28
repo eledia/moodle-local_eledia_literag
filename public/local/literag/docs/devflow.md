@@ -11,16 +11,16 @@ Projektbezogener DevFlow fuer `local_literag`, angelegt nach dem Muster aus
   LernHive-Handbuch sind umgesetzt. Lokale PHPUnit- und Moodle-CS-Checks sind
   gruen.
 - **Blocker:** Keine Code-Blocker im Pluginpfad. Behat hat derzeit keine
-  Plugin-Features; DevFlow/Skills-Loeschungen und `.DS_Store` muessen vor
-  einem finalen Push/Release bereinigt oder bewusst bestaetigt werden.
+  Plugin-Features. Ein gruener GitLab-Cross-DB-Lauf steht als externer
+  Nachweis noch aus.
 
 ## Einstieg
 
 1. `00-master.md` lesen.
 2. `04-tasks.md` pruefen.
 3. Relevante Feature- und Quality-Eintraege lesen.
-4. Bei Moodle-, UX- oder Submission-Themen die passenden Dateien in `Skills/`
-   nutzen.
+4. Bei Moodle-, UX- oder Submission-Themen die zentralen Skills aus
+   `jmoskaliuk/eLeDia.OS_DevFlow` nutzen.
 
 ## Dateien
 
@@ -32,4 +32,3 @@ Projektbezogener DevFlow fuer `local_literag`, angelegt nach dem Muster aus
 | `03-dev-doc.md` | Technische Ist-Dokumentation |
 | `04-tasks.md` | Operative Tasks und offene Fragen |
 | `05-quality.md` | Bugs, Tests und Verifikation |
-| `Skills/` | Wiederverwendbares Moodle-/UX-/QA-Wissen aus eLeDia.OS_DevFlow; aktuell im Worktree geloescht |

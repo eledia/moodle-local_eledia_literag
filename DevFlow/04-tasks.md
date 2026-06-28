@@ -212,9 +212,8 @@ Worktree-Hygiene passen.
 **Ergebnis**
 PHPUnit und Moodle-CS sind lokal gruen. Behat hat derzeit keine Plugin-Features
 und bietet daher keine echte Abdeckung. DevFlow ist auf den Stand vom
-2026-06-28 aktualisiert. Offen bleiben Worktree-Hygiene
-(`DevFlow/Skills`-Loeschungen, `.DS_Store`), fehlende lokale Coverage ohne
-Xdebug und ein gruener GitLab-Cross-DB-Lauf als externer Nachweis.
+2026-06-28 aktualisiert. Offen bleiben fehlende lokale Coverage ohne Xdebug
+und ein gruener GitLab-Cross-DB-Lauf als externer Nachweis.
 
 ### task11 Plugin-eigene Hilfe ohne LernHive-Runtime-Abhaengigkeit
 Status:    done

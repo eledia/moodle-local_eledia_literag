@@ -31,8 +31,8 @@
 1. Dieses Dokument lesen.
 2. `04-tasks.md` lesen und offene `taskXX`/`qXX` identifizieren.
 3. Passende Feature-Definition in `01-features.md` lesen.
-4. Bei Moodle-Themen die DevFlow-Skills nur nutzen, wenn `DevFlow/Skills/`
-   im Worktree vorhanden ist; aktuell sind diese Dateien lokal geloescht.
+4. Bei Moodle-, UX- oder Submission-Themen die zentralen Skills aus
+   `jmoskaliuk/eLeDia.OS_DevFlow` nutzen, nicht lokale Kopien im Plugin-Repo.
 5. Bei UI/Accessibility-Themen die LernHive/eLeDia.ai Tutor Shell als
    Referenz verwenden.
 6. Sicherheitsrelevante Aenderungen immer gegen `05-quality.md` spiegeln.

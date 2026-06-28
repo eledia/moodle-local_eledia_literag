@@ -180,7 +180,7 @@ Datum:   2026-06-26
 **Ausgefuehrt**
 
 ```bash
-rg -n "[^\\x00-\\x7F]" DevFlow/README.md DevFlow/00-master.md DevFlow/01-features.md DevFlow/02-user-doc.md DevFlow/03-dev-doc.md DevFlow/04-tasks.md DevFlow/05-quality.md
+rg -n "[^\\x00-\\x7F]" DevFlow/00-master.md DevFlow/01-features.md DevFlow/02-user-doc.md DevFlow/03-dev-doc.md DevFlow/04-tasks.md DevFlow/05-quality.md public/local/literag/docs/devflow.md
 git diff --check -- DevFlow
 ```
 
@@ -389,8 +389,7 @@ Datum:   2026-06-27
 
 **Offen vor echter Submission**
 
-- Worktree muss sauber sein; aktuell gibt es noch lokale DevFlow/Skills-
-  Loeschungen und `.DS_Store`.
+- Worktree muss sauber sein.
 - Repo-Zugriff fuer Moodle-Reviewer klaeren. Die aktuelle GitLab-Remote ist
   vermutlich nicht oeffentlich.
 - `MATURITY_ALPHA` ist fuer echte Directory-Submission wahrscheinlich noch zu
@@ -480,8 +479,9 @@ docker exec -u www-data -w /var/www/html elediaai-moodle-1 php vendor/bin/phpuni
 - Behat hat keine Plugin-Features (`public/local/literag/tests/behat` fehlt).
 - Lokale Coverage wurde nicht erzeugt, weil im Docker-Container kein Xdebug
   geladen ist.
-- Worktree ist nicht sauber wegen bereits vorhandenen `DevFlow/Skills`-
-  Loeschungen und `DevFlow/.DS_Store`.
+- Worktree war vor dem Cleanup nicht sauber; die lokalen DevFlow-Skill-Kopien
+  wurden entfernt und die DevFlow-Uebersicht nach `public/local/literag/docs/`
+  verschoben.
 
 ### test11 CI Cross-DB PHPUnit Matrix
 
