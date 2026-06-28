@@ -101,6 +101,14 @@ define([], function() {
         }
         form.dataset.lrShellWrapped = '1';
         document.body.classList.add('path-local-literag', 'lr-admin-settings-shell-page');
+        document.body.classList.remove('drawer-open-right', 'drawer-ease');
+        document.body.classList.remove('lr-admin-settings-pending');
+        document.body.classList.add('lh-plugin-shell-page', 'lr-admin-settings-ready');
+
+        const page = document.getElementById('page');
+        if (page) {
+            page.classList.remove('show-drawer-right');
+        }
 
         const shell = document.createElement('div');
         shell.className = 'lh-plugin-shell lr-admin-settings-shell';

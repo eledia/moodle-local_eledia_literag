@@ -39,6 +39,11 @@ if ($hassiteconfig) {
         shell::require_css();
 
         if (shell::is_available()) {
+            $PAGE->add_body_class('path-local-literag');
+            $PAGE->add_body_class('lh-plugin-shell-page');
+            $PAGE->add_body_class('lr-admin-settings-shell-page');
+            $PAGE->add_body_class('lr-admin-settings-pending');
+
             $sectioncards = [
                 [
                     'key' => 'connection',

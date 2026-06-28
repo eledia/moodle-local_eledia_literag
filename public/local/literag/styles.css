@@ -1,3 +1,4 @@
+.path-local-literag,
 #page-admin-setting-local_literag {
     --lr-settings-primary: var(--lh-primary, #194866);
     --lr-settings-primary-dark: var(--lh-primary-dark, #0f2b3d);
@@ -11,6 +12,16 @@
 
 #page-admin-setting-local_literag #adminsettings {
     max-width: var(--lh-page-max-default, 72rem);
+}
+
+body#page-admin-setting-local_literag.lr-admin-settings-pending #adminsettings {
+    min-height: 24rem;
+    opacity: 0;
+}
+
+body#page-admin-setting-local_literag.lr-admin-settings-ready #adminsettings {
+    opacity: 1;
+    transition: opacity 0.08s ease;
 }
 
 #page-admin-setting-local_literag:not(.lr-admin-settings-shell-page) #region-main {
@@ -91,9 +102,15 @@
     display: none !important;
 }
 
+body#page-admin-setting-local_literag.lr-admin-settings-shell-page {
+    margin-right: 0 !important;
+    transition: none !important;
+}
+
 #page-admin-setting-local_literag #page.drawers,
 #page-admin-setting-local_literag #page.drawers.show-drawer-right {
-    margin-right: 0;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
 }
 
 #page-admin-setting-local_literag #adminsettings h3.main {
@@ -146,4 +163,43 @@
 #page-admin-setting-local_literag #adminsettings .form-description {
     color: var(--lr-settings-muted);
     line-height: 1.45;
+}
+
+.path-local-literag .lr-help-doc {
+    background: #fff;
+    border: 1px solid var(--lr-settings-border);
+    border-radius: var(--lr-settings-radius);
+    box-shadow: var(--lr-settings-shadow);
+    color: var(--lr-settings-text);
+    line-height: 1.55;
+    padding: 1.25rem;
+}
+
+.path-local-literag .lr-help-doc h1:first-child,
+.path-local-literag .lr-help-doc h2:first-child,
+.path-local-literag .lr-help-doc h3:first-child {
+    margin-top: 0;
+}
+
+.path-local-literag .lr-help-doc table {
+    display: block;
+    margin: 1rem 0;
+    max-width: 100%;
+    overflow-x: auto;
+    width: 100%;
+}
+
+.path-local-literag .lr-help-doc th,
+.path-local-literag .lr-help-doc td {
+    border: 1px solid var(--lr-settings-border);
+    padding: 0.5rem 0.65rem;
+    vertical-align: top;
+}
+
+.path-local-literag .lr-help-doc pre {
+    background: #f6f8fa;
+    border: 1px solid var(--lr-settings-border);
+    border-radius: 0.35rem;
+    padding: 0.75rem;
+    white-space: pre-wrap;
 }

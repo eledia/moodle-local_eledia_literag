@@ -190,8 +190,8 @@ Prioritaet: P2
 Linked:    test12
 
 **Ziel**
-`/local/lernhive/support.php?component=local_literag` soll wie das Tutor-
-Handbuch echte Hilfeinhalte zeigen.
+Der optionale LernHive Support Hub soll wie das Tutor-Handbuch echte
+Hilfeinhalte zeigen.
 
 **Ergebnis**
 `public/local/literag/docs/02-user-doc.de.md` und
@@ -215,3 +215,20 @@ und bietet daher keine echte Abdeckung. DevFlow ist auf den Stand vom
 2026-06-28 aktualisiert. Offen bleiben Worktree-Hygiene
 (`DevFlow/Skills`-Loeschungen, `.DS_Store`), fehlende lokale Coverage ohne
 Xdebug und ein gruener GitLab-Cross-DB-Lauf als externer Nachweis.
+
+### task11 Plugin-eigene Hilfe ohne LernHive-Runtime-Abhaengigkeit
+Status:    done
+Feature:   feat05
+Prioritaet: P2
+Linked:    test14
+
+**Ziel**
+LiteRAG soll seine Hilfe selbst ausliefern. LernHive darf dieselbe
+Dokumentation optional anzeigen, darf aber keine Voraussetzung fuer die
+Runtime-Hilfe sein.
+
+**Ergebnis**
+`public/local/literag/help.php` rendert `docs/02-user-doc.de.md` bzw.
+`docs/02-user-doc.md` in der Plugin Shell, setzt
+`show_only_fake_blocks(true)` und ist ueber den Shell-Hilfe-Button erreichbar.
+Im Plugin-Code gibt es keinen harten Link auf `/local/lernhive/support.php`.

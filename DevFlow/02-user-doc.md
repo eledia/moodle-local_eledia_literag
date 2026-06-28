@@ -49,13 +49,15 @@ Wenn `local_lernhive` nicht installiert ist, laedt LiteRAG keine Shell und keine
 Shell-Navigation. Die Settings bleiben als Moodle-Admin-Formular bedienbar und
 erhalten ein schlankes LiteRAG-Fallback-Styling.
 
-### Handbuch im LernHive Support Hub
+### Plugin-Hilfe und Handbuch
 
-Die Hilfe ist unter
-`/local/lernhive/support.php?component=local_literag` verfuegbar, wenn
-`local_lernhive` installiert ist. Die deutsche Version wird aus
-`docs/02-user-doc.de.md` geladen, die englische Fassung aus
+Die Hilfe ist plugin-eigen unter `/local/literag/help.php` verfuegbar. Sie
+rendert dieselbe Dokumentation, die auch der optionale LernHive Support Hub
+anzeigen kann: Deutsch aus `docs/02-user-doc.de.md`, Englisch aus
 `docs/02-user-doc.md`.
+
+Wenn `local_lernhive` installiert ist, oeffnet die Hilfe in der Plugin Shell.
+Die Moodle-Blockleiste wird auf der Hilfeseite ausgeblendet.
 
 ### Ingest-Endpunkt verbinden (`feat01`)
 

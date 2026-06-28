@@ -259,6 +259,41 @@ Keine kritischen Befunde. Als offene Arbeit uebernommen wurden:
 Die aktuelle Shell-UI mit `local_lernhive` bleibt nutzbar. Der wichtigste offene
 UX-Schritt ist der Nicht-Shell-Fallback.
 
+### test14 Plugin-eigene Hilfe
+
+Feature: feat05
+Status:  passed
+Datum:   2026-06-28
+Linked:  task11
+
+**Ziel**
+Sicherstellen, dass Hilfe ohne LernHive Support Hub laeuft und keine Moodle-
+Blockleiste zeigt.
+
+**Soll geprueft werden**
+
+```bash
+php -l public/local/literag/help.php
+rg -n "local/lernhive/support\\.php" public/local/literag
+docker exec -u www-data elediaai-moodle-1 php /var/www/html/admin/cli/purge_caches.php
+```
+
+**Erwartung**
+Der Shell-Hilfe-Button verweist auf `/local/literag/help.php`, die Seite rendert
+zentrale Inhalte aus `docs/02-user-doc.*.md` und `show_only_fake_blocks(true)`
+verhindert eine sichtbare Moodle-Blockregion.
+
+**Ergebnis 2026-06-28**
+Serverseitig geprueft: PHP-Lint ist gruen, `rg` findet im Plugin-Code keinen
+Link auf den LernHive Support Hub, lokales Deploy und Cache-Purge waren
+erfolgreich, und Moodle liefert als Shell-Help-URL
+`http://localhost:8080/local/literag/help.php`. Die Browser-Sichtpruefung war
+blockiert, weil die lokale Browser-Session auf die Moodle-Anmeldeseite
+umgeleitet wurde. Moodle-CS konnte in Repo und Container nicht erneut gestartet
+werden, weil `phpcs` aktuell nicht installiert/auffindbar ist.
+`local_literag_testsuite` lief anschliessend erfolgreich durch: 57 Tests,
+188 Assertions, Exit-Code 0, mit 9 bekannten PHPUnit-Deprecations.
+
 ### test08 Nicht-Shell-Fallback-CSS
 
 Feature: feat05

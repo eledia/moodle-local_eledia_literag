@@ -44,6 +44,9 @@ final class shell {
     /** @var string Settings section key. */
     public const ACTIVE_SETTINGS = 'settings';
 
+    /** @var string Help page section key. */
+    public const ACTIVE_HELP = 'help';
+
     /** @var string eLeDia.ai Tutor navigation key for LiteRAG. */
     private const TUTOR_ACTIVE_LITERAG = 'literag';
 
@@ -61,6 +64,9 @@ final class shell {
      */
     public static function require_css(): void {
         global $PAGE;
+
+        $PAGE->add_body_class('path-local-literag');
+        $PAGE->add_body_class('lh-plugin-shell-page');
 
         $PAGE->requires->css('/local/literag/styles.css');
         if (class_exists('\\block_eledia_aitutor\\output\\shell')) {
@@ -92,14 +98,13 @@ final class shell {
             'tagline' => get_string('settings', 'core'),
             'subtitle' => get_string('shell_subtitle', 'local_literag'),
             'sectionnav' => self::sectionnav($active),
-        ] + \local_lernhive\output\plugin_shell::action_slots(
-            'local_literag',
-            true,
-            null,
-            get_string('shell_help_label', 'local_literag'),
-            null,
-            false
-        );
+            'hasactions' => true,
+            'helpurl' => (new moodle_url('/local/literag/help.php'))->out(false),
+            'helplabel' => get_string('shell_help_label', 'local_literag'),
+            'settingsurl' => '',
+            'settingslabel' => get_string('settings', 'core'),
+            'settingsiscurrent' => false,
+        ];
     }
 
     /**

@@ -32,6 +32,7 @@ Transport-Token und Moodle-MCP-Token bleiben serverseitig.
 |---|---|
 | `public/local/literag/ingest.php` | Ingest-Endpunkt |
 | `public/local/literag/mcp.php` | JSON-RPC/MCP Tutor-Endpunkt |
+| `public/local/literag/help.php` | Plugin-eigene Hilfe aus `docs/` |
 | `public/local/literag/settings.php` | Admin Settings und Shell-Initialisierung |
 | `public/local/literag/classes/output/shell.php` | LernHive/eLeDia.ai Shell Adapter |
 | `public/local/literag/amd/src/settings_shell.js` | Admin-Settings UI Gruppierung |
@@ -87,6 +88,17 @@ aber visuell noch nicht fertig. Offene technische Punkte:
   `.path-local-literag` ankern.
 - AMD-Modul langfristig auf aktuellen Moodle-Pattern pruefen und Logging bei
   Guard-Returns ergaenzen.
+
+## Plugin-eigene Hilfe
+
+`help.php` ist die kanonische Runtime-Hilfe des Plugins. Sie laedt
+sprachabhaengig `docs/02-user-doc.de.md` oder `docs/02-user-doc.md`, rendert
+Markdown mit `format_text(..., FORMAT_MARKDOWN)` und laeuft mit
+`show_only_fake_blocks(true)`, damit keine Moodle-Blockregion erscheint.
+
+Der Hilfe-Button in `classes/output/shell.php` verweist direkt auf
+`/local/literag/help.php`. Der LernHive Support Hub darf dieselben Markdown-
+Dateien optional aggregieren, ist aber keine Runtime-Abhaengigkeit fuer Hilfe.
 
 ---
 

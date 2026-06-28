@@ -154,6 +154,26 @@ LiteRAG liefert ein eigenes deutsches und englisches Handbuch unter
 `public/local/literag/docs/`.
 
 **Folgen**
-`/local/lernhive/support.php?component=local_literag` zeigt ein echtes
-Handbuch statt eines Pending-Zustands. Die erste Kurzbeschreibung wird aus dem
-Abschnitt `## User value` extrahiert.
+Der optionale LernHive Support Hub kann ein echtes Handbuch statt eines
+Pending-Zustands zeigen. Die erste Kurzbeschreibung wird aus dem Abschnitt
+`## User value` extrahiert.
+
+### adr06 Hilfe gehoert dem Plugin, LernHive ist nur Aggregator
+
+**Status:** accepted
+
+**Kontext**
+Die Plugin-Hilfe darf keine Runtime-Abhaengigkeit auf den LernHive Support Hub
+haben. LernHive kann Dokumentation sammeln und anzeigen, soll aber nicht der
+einzige Weg zur Hilfe sein.
+
+**Entscheidung**
+LiteRAG stellt `/local/literag/help.php` bereit. Die Seite rendert
+`docs/02-user-doc.de.md` oder `docs/02-user-doc.md` in der Plugin Shell und
+aktiviert `show_only_fake_blocks(true)`, damit keine Moodle-Blockleiste
+erscheint. Der Shell-Hilfe-Button zeigt auf diese plugin-eigene Seite.
+
+**Folgen**
+Es gibt keine harten Links auf `/local/lernhive/support.php` im Plugin-Code.
+`local_lernhive` bleibt optionaler Shell-/Support-Renderer, aber keine
+Voraussetzung fuer die LiteRAG-Hilfe.
