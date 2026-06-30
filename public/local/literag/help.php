@@ -57,11 +57,8 @@ $html = $markdown !== ''
 echo $OUTPUT->header();
 
 if (shell::is_available()) {
-    $header = shell::context(shell::ACTIVE_HELP);
-    $header['tagline'] = get_string('help', 'core');
-    $header['sectionnav'] = shell::sectionnav(shell::ACTIVE_HELP);
     echo html_writer::start_div('lh-plugin-shell lr-help-shell');
-    echo $OUTPUT->render_from_template('local_lernhive/plugin_shell_header', $header);
+    echo shell::header_html(shell::ACTIVE_HELP);
     echo html_writer::start_div('lh-plugin-content-area');
 } else {
     echo $OUTPUT->heading(get_string('shell_help_label', 'local_literag'));

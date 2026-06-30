@@ -155,17 +155,23 @@ class agent {
 
         $result = $this->mcp->call_tool($name, $arguments);
 
-        // Record the previewed write, keyed on the recipient the server resolved
-        // (so the confirmed send goes exactly where the learner was shown).
-        if ($iswrite && !$result['iserror'] && is_array($result['structured'])) {
+        // Record a previewed write so tutor_chat can apply it on the learner's next
+        // confirmation. Any elediamcp write tool signals a preview with
+        // requires_confirmation=true; the confirmed turn replays these arguments with
+        // confirm=true. moodle_send_message is additionally pinned to the server-resolved
+        // recipient id (so the confirmed send goes exactly where the learner was shown);
+        // every other write tool (e.g. moodle_update_course) replays the exact arguments
+        // that produced the preview.
+        if ($iswrite && !$result['iserror'] && is_array($result['structured'])
+                && !empty($result['structured']['requires_confirmation'])) {
             $structured = $result['structured'];
+            $replay = $arguments;
+            unset($replay['confirm']);
             $recipientid = isset($structured['recipient']['id']) ? (int) $structured['recipient']['id'] : 0;
-            if ($recipientid > 0 && isset($arguments['message'])) {
-                $this->pendingaction = [
-                    'tool' => $name,
-                    'arguments' => ['to_user_id' => $recipientid, 'message' => (string) $arguments['message']],
-                ];
+            if ($name === 'moodle_send_message' && $recipientid > 0 && isset($arguments['message'])) {
+                $replay = ['to_user_id' => $recipientid, 'message' => (string) $arguments['message']];
             }
+            $this->pendingaction = ['tool' => $name, 'arguments' => $replay];
         }
 
         if ($result['iserror']) {

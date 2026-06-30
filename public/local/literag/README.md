@@ -40,7 +40,7 @@ German documentation: [README.de.md](README.de.md)
 - An OpenAI-compatible chat-completions endpoint and API key.
 - `$CFG->slasharguments` enabled for ingestion URLs such as
   `/local/literag/ingest.php/documents/upsert`.
-- Optional: `local_lernhive` for the shared Plugin Shell UI.
+- Optional: `block_eledia_aitutor` for the shared tutor navigation shell.
 - Optional: `webservice_elediamcp` for Live Moodle tools.
 - Optional: Poppler `pdftotext` for higher-fidelity PDF extraction.
 

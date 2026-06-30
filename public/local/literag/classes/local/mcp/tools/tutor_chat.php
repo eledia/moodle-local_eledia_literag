@@ -336,8 +336,11 @@ class tutor_chat implements tool {
 
         $summary = (is_array($result['structured']) && !empty($result['structured']['summary']))
             ? (string) $result['structured']['summary'] : '';
-        $sent = !$result['iserror'] && !empty($result['structured']['sent']);
-        if ($sent) {
+        // A write tool that still reports requires_confirmation did not apply; a real
+        // apply clears that flag (and may set sent/updated). Works for any write tool.
+        $done = !$result['iserror'] && is_array($result['structured'])
+            && empty($result['structured']['requires_confirmation']);
+        if ($done) {
             $note = 'You have just completed the learner\'s confirmed request: '
                 . ($summary !== '' ? $summary : 'done') . '. Confirm this to the learner in one short sentence.';
         } else {
@@ -352,7 +355,7 @@ class tutor_chat implements tool {
                 prompt_builder::build($note, [], $history, null, $userlang, $persona, false)
             );
         } catch (llm_exception $e) {
-            $answer = $sent ? get_string('confirm_sent', 'local_literag') : get_string('error_llm', 'local_literag');
+            $answer = $done ? get_string('confirm_sent', 'local_literag') : get_string('error_llm', 'local_literag');
         }
 
         $this->repo->add_message($conversation, 'assistant', $answer, null, 0, []);

@@ -41,7 +41,7 @@ English documentation: [README.md](README.md)
 - Ein OpenAI-kompatibler Chat-Completions-Endpunkt mit API-Key.
 - Aktivierte `$CFG->slasharguments` fuer Ingest-URLs wie
   `/local/literag/ingest.php/documents/upsert`.
-- Optional: `local_lernhive` fuer die gemeinsame Plugin-Shell-Oberflaeche.
+- Optional: `block_eledia_aitutor` fuer die gemeinsame Tutor-Navigations-Shell.
 - Optional: `webservice_elediamcp` fuer Live-Moodle-Tools.
 - Optional: Poppler `pdftotext` fuer bessere PDF-Textextraktion.
 
