@@ -73,6 +73,7 @@ jobs:
           fi
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
           echo "PLUGIN_DIR=$dir" >> "$GITHUB_ENV"
+          echo "MOODLE_DIR=moodle" >> "$GITHUB_ENV"
           echo "Resolved plugin directory: $dir"
 
       - name: Setup Node.js (for Grunt, JS & SCSS)
@@ -111,7 +112,15 @@ jobs:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
           IGNORE_PATHS: 'docs'
-        run: moodle-plugin-ci install --plugin "${{ steps.plugin.outputs.dir }}" --db-host=127.0.0.1 -vvv
+        run: moodle-plugin-ci install --moodle "$MOODLE_DIR" --plugin "$PLUGIN_DIR" --db-host=127.0.0.1 --no-init -vvv
+
+      - name: Initialise PHPUnit
+        run: |
+          if [ -f "$MOODLE_DIR/public/admin/tool/phpunit/cli/init.php" ]; then
+            php "$MOODLE_DIR/public/admin/tool/phpunit/cli/init.php"
+          else
+            php "$MOODLE_DIR/admin/tool/phpunit/cli/init.php"
+          fi
 
       # ----------------------------- Static checks -----------------------------
       - name: PHP Lint
@@ -132,7 +141,7 @@ jobs:
 
       - name: Validate plugin metadata
         if: ${{ always() }}
-        run: moodle-plugin-ci validate "$PLUGIN_DIR"
+        run: moodle-plugin-ci validate --moodle "$MOODLE_DIR" "$PLUGIN_DIR"
 
       - name: Verify upgrade savepoints
         if: ${{ always() }}
@@ -144,20 +153,20 @@ jobs:
 
       - name: Grunt (JS / SCSS)
         if: ${{ always() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings=0 "$PLUGIN_DIR"
+        run: moodle-plugin-ci grunt --moodle "$MOODLE_DIR" --max-lint-warnings=0 "$PLUGIN_DIR"
 
       - name: PHPDoc checks
         if: ${{ always() }}
-        run: moodle-plugin-ci phpdoc --max-warnings=0 "$PLUGIN_DIR"
+        run: moodle-plugin-ci phpdoc --moodle "$MOODLE_DIR" --max-warnings=0 "$PLUGIN_DIR"
 
       # ----------------------------- Test suites -----------------------------
       - name: PHPUnit
         if: ${{ always() }}
-        run: moodle-plugin-ci phpunit --fail-on-warning "$PLUGIN_DIR"
+        run: moodle-plugin-ci phpunit --moodle "$MOODLE_DIR" --fail-on-warning "$PLUGIN_DIR"
 
       - name: Behat (Chrome)
         if: ${{ always() }}
-        run: moodle-plugin-ci behat --profile chrome --auto-rerun=1 "$PLUGIN_DIR"
+        run: moodle-plugin-ci behat --moodle "$MOODLE_DIR" --profile chrome --auto-rerun=1 "$PLUGIN_DIR"
 
       # ----------------------------- Logs on failure -----------------------------
       - name: Upload Behat failure screenshots
