@@ -52,7 +52,7 @@ $string['enable_write_tools_desc'] = 'Off by default. When on (and live tools ar
 $string['endpointinfo'] = 'Endpoint URLs';
 $string['endpointinfo_desc'] = 'Configure the existing plugins to point here:<ul>'
     . '<li><strong>local_ragingest</strong> &rarr; ingestion endpoint URL: <code>{$a->upsert}</code></li>'
-    . '<li><strong>block_elediaaitutor</strong> &rarr; RAG server URL: <code>{$a->mcp}</code></li></ul>'
+    . '<li><strong>block_eledia_aitutor</strong> &rarr; RAG server URL: <code>{$a->mcp}</code></li></ul>'
     . 'The ingestion URL must end in <code>/upsert</code> (slash arguments); the delete URL is derived automatically.';
 $string['error_llm'] = 'Sorry, the tutor could not generate an answer right now. Please try again.';
 $string['head_connection'] = 'Connection';

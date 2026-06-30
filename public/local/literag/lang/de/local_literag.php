@@ -52,7 +52,7 @@ $string['enable_write_tools_desc'] = 'Standardmäßig aus. Wenn aktiviert (und L
 $string['endpointinfo'] = 'Endpunkt-URLs';
 $string['endpointinfo_desc'] = 'Konfigurieren Sie die vorhandenen Plugins so, dass sie hierhin zeigen:<ul>'
     . '<li><strong>local_ragingest</strong> &rarr; Ingest-Endpunkt-URL: <code>{$a->upsert}</code></li>'
-    . '<li><strong>block_elediaaitutor</strong> &rarr; RAG-Server-URL: <code>{$a->mcp}</code></li></ul>'
+    . '<li><strong>block_eledia_aitutor</strong> &rarr; RAG-Server-URL: <code>{$a->mcp}</code></li></ul>'
     . 'Die Ingest-URL muss mit <code>/upsert</code> enden (Slash-Argumente); die Lösch-URL wird automatisch abgeleitet.';
 $string['error_llm'] = 'Entschuldigung, der Tutor konnte gerade keine Antwort erzeugen. Bitte versuchen Sie es erneut.';
 $string['head_connection'] = 'Verbindung';

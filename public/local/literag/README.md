@@ -9,7 +9,7 @@ answers with citations.
 The plugin is designed for the eLeDia.ai Tutor landscape:
 
 - `local_ragingest` sends course content to LiteRAG.
-- `block_elediaaitutor` calls LiteRAG through the JSON-RPC/MCP tutor endpoint.
+- `block_eledia_aitutor` calls LiteRAG through the JSON-RPC/MCP tutor endpoint.
 - Existing plugins do not need code changes; their endpoint URLs point to
   LiteRAG.
 
@@ -21,7 +21,7 @@ German documentation: [README.de.md](README.de.md)
 
 - Moodle-local RAG backend without embeddings or a vector database.
 - Ingestion endpoint compatible with `local_ragingest`.
-- JSON-RPC/MCP tutor endpoint compatible with `block_elediaaitutor`.
+- JSON-RPC/MCP tutor endpoint compatible with `block_eledia_aitutor`.
 - Database full-text search for PostgreSQL, MySQL/MariaDB and MSSQL, with a
   portable `LIKE` fallback.
 - Permission-safe retrieval through Moodle course-module visibility checks.
@@ -76,7 +76,7 @@ Important settings:
   retention.
 
 The settings page displays the endpoint URLs that need to be copied into
-`local_ragingest` and `block_elediaaitutor`.
+`local_ragingest` and `block_eledia_aitutor`.
 
 ### Connect `local_ragingest`
 
@@ -88,7 +88,7 @@ https://<wwwroot>/local/literag/ingest.php/documents/upsert
 
 Use the same API key as configured in LiteRAG.
 
-### Connect `block_elediaaitutor`
+### Connect `block_eledia_aitutor`
 
 Set the RAG server URL to:
 

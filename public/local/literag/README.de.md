@@ -9,7 +9,7 @@ OpenAI-kompatibles LLM eine geerdete Antwort mit Quellen erzeugen.
 Das Plugin ist fuer die eLeDia.ai Tutor-Landschaft gedacht:
 
 - `local_ragingest` sendet Kursinhalte an LiteRAG.
-- `block_elediaaitutor` ruft LiteRAG ueber den JSON-RPC/MCP-Tutor-Endpunkt auf.
+- `block_eledia_aitutor` ruft LiteRAG ueber den JSON-RPC/MCP-Tutor-Endpunkt auf.
 - Bestehende Plugins muessen nicht angepasst werden; ihre Endpoint-URLs zeigen
   auf LiteRAG.
 
@@ -21,7 +21,7 @@ English documentation: [README.md](README.md)
 
 - Moodle-lokales RAG-Backend ohne Embeddings und ohne Vektordatenbank.
 - Ingest-Endpunkt kompatibel mit `local_ragingest`.
-- JSON-RPC/MCP-Tutor-Endpunkt kompatibel mit `block_elediaaitutor`.
+- JSON-RPC/MCP-Tutor-Endpunkt kompatibel mit `block_eledia_aitutor`.
 - Datenbank-Volltextsuche fuer PostgreSQL, MySQL/MariaDB und MSSQL, mit
   portablem `LIKE`-Fallback.
 - Berechtigungssichere Suche ueber Moodle-Sichtbarkeitspruefungen fuer
@@ -78,7 +78,7 @@ Wichtige Einstellungen:
   Memory-Aufbewahrung.
 
 Die Einstellungsseite zeigt die Endpoint-URLs an, die in `local_ragingest` und
-`block_elediaaitutor` eingetragen werden muessen.
+`block_eledia_aitutor` eingetragen werden muessen.
 
 ### `local_ragingest` verbinden
 
@@ -90,7 +90,7 @@ https://<wwwroot>/local/literag/ingest.php/documents/upsert
 
 Denselben API-Key verwenden wie in LiteRAG.
 
-### `block_elediaaitutor` verbinden
+### `block_eledia_aitutor` verbinden
 
 RAG-Server-URL setzen auf:
 
