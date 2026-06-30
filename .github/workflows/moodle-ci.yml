@@ -79,7 +79,7 @@ jobs:
       - name: Setup Node.js (for Grunt, JS & SCSS)
         uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup PHP ${{ matrix.php-version }}
         uses: shivammathur/setup-php@v2
