@@ -31,7 +31,7 @@ namespace local_literag\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class prompt_builder {
-    /** @var array<string, int> Maximum prompt-visible persona field lengths. */
+    /** @var array<string,int> Maximum prompt-visible persona field lengths. */
     private const PERSONA_FIELD_LIMITS = [
         'name' => 80,
         'role' => 200,
@@ -55,6 +55,7 @@ class prompt_builder {
      * @param bool $grounded Whether retrieval is in effect.
      * @param string|null $usersummary Optional LLM-ready summary of the learner (from moodle_verify_user_context).
      * @param bool $hastools Whether live moodle_* tools are available this turn.
+     * @param bool $haswrites Whether write tools (with confirmation) are available this turn.
      * @return array OpenAI-style messages.
      */
     public static function build(
@@ -103,6 +104,7 @@ class prompt_builder {
      * @param bool $grounded
      * @param string|null $usersummary
      * @param bool $hastools
+     * @param bool $haswrites
      * @return string
      */
     private static function system_prompt(

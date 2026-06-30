@@ -21,7 +21,7 @@ body#page-admin-setting-local_literag.lr-admin-settings-pending #adminsettings {
 
 body#page-admin-setting-local_literag.lr-admin-settings-ready #adminsettings {
     opacity: 1;
-    transition: opacity 0.08s ease;
+    transition: opacity 0.1s ease;
 }
 
 #page-admin-setting-local_literag:not(.lr-admin-settings-shell-page) #region-main {
@@ -99,18 +99,18 @@ body#page-admin-setting-local_literag.lr-admin-settings-ready #adminsettings {
 #page-admin-setting-local_literag [data-region="right-hand-drawer"],
 #page-admin-setting-local_literag .drawer-right,
 #page-admin-setting-local_literag .drawer-toggler.drawer-right-toggle {
-    display: none !important;
+    display: none !important; /* stylelint-disable-line declaration-no-important */
 }
 
 body#page-admin-setting-local_literag.lr-admin-settings-shell-page {
-    margin-right: 0 !important;
-    transition: none !important;
+    margin-right: 0 !important; /* stylelint-disable-line declaration-no-important */
+    transition: none !important; /* stylelint-disable-line declaration-no-important */
 }
 
 #page-admin-setting-local_literag #page.drawers,
 #page-admin-setting-local_literag #page.drawers.show-drawer-right {
-    margin-right: 0 !important;
-    padding-right: 0 !important;
+    margin-right: 0 !important; /* stylelint-disable-line declaration-no-important */
+    padding-right: 0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
 #page-admin-setting-local_literag #adminsettings h3.main {

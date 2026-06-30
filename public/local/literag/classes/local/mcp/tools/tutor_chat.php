@@ -280,7 +280,7 @@ class tutor_chat implements tool {
      * appearance, so sources[0] stays the primary source.
      *
      * @param array $contextchunks Chunk records (mutated: each gains ->sourcenum).
-     * @return array<int, array{title: string, url: string, snippet: string}> Unique sources.
+     * @return array<int,array{title: string,url: string,snippet: string}> Unique sources.
      */
     private function number_sources(array $contextchunks): array {
         $sources = [];

@@ -118,7 +118,7 @@ final class shell {
      * intentionally omitted instead of pointing to admin/settings.php.
      *
      * @param string $active Active section key.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function context(string $active = self::ACTIVE_SETTINGS): array {
         if (!self::is_available()) {

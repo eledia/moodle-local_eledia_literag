@@ -123,7 +123,7 @@ class moodle_client {
      * Each descriptor carries a `readonly` flag (from the tool's readOnlyHint) so
      * the caller can decide which to expose; write tools are never silently mixed in.
      *
-     * @return array<int, array{name: string, description: string, parameters: array, readonly: bool}>
+     * @return array<int,array{name: string,description: string,parameters: array,readonly: bool}>
      *               Empty when the server is unavailable or exposes no tools.
      */
     public function list_tools(): array {

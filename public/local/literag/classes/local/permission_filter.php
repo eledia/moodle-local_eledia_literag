@@ -38,10 +38,10 @@ class permission_filter {
     /** @var \stdClass The user record. */
     private \stdClass $user;
 
-    /** @var array<int, \course_modinfo|null> Per-course modinfo cache. */
+    /** @var array<int,\course_modinfo|null> Per-course modinfo cache. */
     private array $modinfo = [];
 
-    /** @var array<int, bool> Per-course access cache. */
+    /** @var array<int,bool> Per-course access cache. */
     private array $courseaccess = [];
 
     /**
