@@ -100,8 +100,10 @@ final class prompt_builder_test extends \advanced_testcase {
     public function test_hint_mode_withholds_solution(): void {
         $prompt = $this->system_prompt('hint');
         $this->assertStringContainsString('ANSWER MODE = hints only', $prompt);
-        $this->assertStringContainsString('Do NOT reveal', $prompt);
+        $this->assertStringContainsString('never reveal', $prompt);
+        $this->assertStringContainsString('at most three short hints', $prompt);
         $this->assertStringContainsString('final solution', $prompt);
+        $this->assertStringContainsString('End with one concrete question', $prompt);
         $this->assertStringContainsString('insists', $prompt); // Holds even when the learner insists.
     }
 
@@ -112,7 +114,8 @@ final class prompt_builder_test extends \advanced_testcase {
         $prompt = $this->system_prompt('quiz');
         $this->assertStringContainsString('ANSWER MODE = quiz', $prompt);
         $this->assertStringContainsString('practice questions', $prompt);
-        $this->assertStringContainsString('wait for their answers', $prompt);
+        $this->assertStringContainsString('do not explain first', $prompt);
+        $this->assertStringContainsString('stop after the questions', $prompt);
     }
 
     /**

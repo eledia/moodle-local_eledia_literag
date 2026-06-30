@@ -213,14 +213,20 @@ class prompt_builder {
     private static function answer_mode_line(?string $answerstyle): string {
         switch ($answerstyle) {
             case 'hint':
-                return 'ANSWER MODE = hints only. Do NOT reveal the answer or the final solution under '
-                    . 'any circumstances — even if the learner asks directly or insists. Respond only with '
-                    . 'guiding questions, partial steps and nudges so the learner reaches it themselves. If '
-                    . 'they push for the solution, encourage them and offer a further hint instead.';
+                return 'ANSWER MODE = hints only. For learning questions, never reveal the answer or final '
+                    . 'solution under any circumstances - even if the learner asks directly or insists. '
+                    . 'Output contract: give at most three short hints, each as a nudge or guiding question; '
+                    . 'do not include a worked solution, final result, sample answer or conclusion. End with '
+                    . 'one concrete question the learner can answer next. If they push for the solution, '
+                    . 'encourage them and offer a smaller hint instead. For administrative or tool-action '
+                    . 'requests, complete the action normally and keep the reply brief.';
             case 'quiz':
-                return 'ANSWER MODE = quiz. Do NOT simply explain. Ask the learner short practice questions '
-                    . '(one or a few at a time), wait for their answers, then give feedback on what they said. '
-                    . 'Keep the learner actively answering rather than reading explanations.';
+                return 'ANSWER MODE = quiz. For learning questions, do not explain first and do not solve the '
+                    . 'task for the learner. Output contract: ask one to three short practice questions, '
+                    . 'number them when useful, and stop after the questions so the learner has to answer. '
+                    . 'After the learner answers, give feedback and ask the next question. Keep the learner '
+                    . 'actively answering rather than reading explanations. For administrative or tool-action '
+                    . 'requests, complete the action normally and keep the reply brief.';
             default:
                 return 'ANSWER MODE = explain. Give a clear, complete and correct explanation.';
         }
