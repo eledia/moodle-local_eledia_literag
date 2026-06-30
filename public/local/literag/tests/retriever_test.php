@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace local_literag;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use local_literag\local\retriever;
 use local_literag\local\tenant;
 
@@ -27,8 +28,8 @@ use local_literag\local\tenant;
  * @package    local_literag
  * @copyright  2026 Christopher Reimann, eLeDia GmbH <christopher.reimann@eledia.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \local_literag\local\retriever
  */
+#[CoversClass(\local_literag\local\retriever::class)]
 final class retriever_test extends \advanced_testcase {
     /**
      * Insert a chunk row and return its source id.

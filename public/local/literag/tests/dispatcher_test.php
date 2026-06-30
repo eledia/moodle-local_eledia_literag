@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace local_literag;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use local_literag\local\conversation_repository;
 use local_literag\local\mcp\dispatcher;
 
@@ -27,8 +28,8 @@ use local_literag\local\mcp\dispatcher;
  * @package    local_literag
  * @copyright  2026 Christopher Reimann, eLeDia GmbH <christopher.reimann@eledia.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \local_literag\local\mcp\dispatcher
  */
+#[CoversClass(\local_literag\local\mcp\dispatcher::class)]
 final class dispatcher_test extends \advanced_testcase {
     /**
      * Mint a usable MCP token for a user.

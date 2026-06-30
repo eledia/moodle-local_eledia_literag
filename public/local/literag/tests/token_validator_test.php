@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace local_literag;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use local_literag\local\token_validator;
 
 /**
@@ -26,8 +27,8 @@ use local_literag\local\token_validator;
  * @package    local_literag
  * @copyright  2026 Christopher Reimann, eLeDia GmbH <christopher.reimann@eledia.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \local_literag\local\token_validator
  */
+#[CoversClass(\local_literag\local\token_validator::class)]
 final class token_validator_test extends \advanced_testcase {
     /**
      * Insert an external_tokens row directly and return the plain token.

@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace local_literag;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use local_literag\local\agent;
 use local_literag\local\http\transport;
 use local_literag\local\llm\client;
@@ -29,9 +30,9 @@ use local_literag\local\mcp\moodle_client;
  * @package    local_literag
  * @copyright  2026 Christopher Reimann, eLeDia GmbH <christopher.reimann@eledia.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \local_literag\local\agent
- * @covers     \local_literag\local\mcp\moodle_client
  */
+#[CoversClass(\local_literag\local\agent::class)]
+#[CoversClass(\local_literag\local\mcp\moodle_client::class)]
 final class agent_test extends \advanced_testcase {
     /**
      * A transport that replays a queue of canned responses and records request bodies.

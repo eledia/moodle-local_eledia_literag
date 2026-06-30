@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace local_literag;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use local_literag\local\prompt_builder;
 
 /**
@@ -26,8 +27,8 @@ use local_literag\local\prompt_builder;
  * @package    local_literag
  * @copyright  2026 Christopher Reimann, eLeDia GmbH <christopher.reimann@eledia.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \local_literag\local\prompt_builder
  */
+#[CoversClass(\local_literag\local\prompt_builder::class)]
 final class prompt_builder_test extends \advanced_testcase {
     /**
      * Build the system prompt for a given answer style and grounding.
