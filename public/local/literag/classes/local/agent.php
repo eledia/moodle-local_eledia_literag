@@ -162,8 +162,10 @@ class agent {
         // recipient id (so the confirmed send goes exactly where the learner was shown);
         // every other write tool (e.g. moodle_update_course) replays the exact arguments
         // that produced the preview.
-        if ($iswrite && !$result['iserror'] && is_array($result['structured'])
-                && !empty($result['structured']['requires_confirmation'])) {
+        if (
+            $iswrite && !$result['iserror'] && is_array($result['structured'])
+                && !empty($result['structured']['requires_confirmation'])
+        ) {
             $structured = $result['structured'];
             $replay = $arguments;
             unset($replay['confirm']);

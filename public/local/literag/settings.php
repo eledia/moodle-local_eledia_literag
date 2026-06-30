@@ -89,7 +89,7 @@ if ($hassiteconfig) {
                 'pluginTitle' => get_string('pluginname', 'local_literag'),
                 'hubDesc' => get_string('settings_hub_desc', 'local_literag'),
             ];
-            // js_amd_inline (not js_call_amd): the header HTML exceeds the 1024-char
+            // Use js_amd_inline (not js_call_amd): the header HTML exceeds the 1024-char
             // js_call_amd budget, which dev debugging escalates to a fatal.
             $encodedconfig = json_encode(
                 $shellconfig,
