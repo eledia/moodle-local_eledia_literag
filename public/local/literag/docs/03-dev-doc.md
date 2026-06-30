@@ -56,6 +56,18 @@ Transport-Token und Moodle-MCP-Token bleiben serverseitig.
 - Optional `local_lernhive` fuer Plugin Shell UI.
 - Optional `local_ragingest` fuer produktive Inhaltsingestion.
 
+**Geerdeter Modus und `webservice_elediamcp`.** Die Einstellungen
+`enable_mcp_tools`, `enable_write_tools` und `max_tool_iterations` betreffen
+ausschliesslich den geerdeten Modus; im reinen LLM-Modus haben sie keine
+Wirkung. Wichtig: Der geerdete Modus benoetigt `webservice_elediamcp`
+unabhaengig vom Backend, weil der **Block** das nutzerbezogene Token ueber die
+API von elediamcp praegt. Die lokale Berechtigungsfilterung von LiteRAG
+(`permission_filter`) ersetzt das nicht — sie erlaubt nicht, geerdet ohne
+elediamcp auszuliefern, sondern macht lediglich `enable_mcp_tools` gefahrlos
+abschaltbar, weil die Moodle-Sichtbarkeit ohnehin lokal (`can_access_course()` +
+`$cm->uservisible`) erzwungen wird. Ein externes/nicht-Moodle-Backend hat diesen
+lokalen Filter nicht und muss den MCP-Rueckruf zur Autorisierung nutzen.
+
 ---
 
 ## Sicherheitsnotizen
