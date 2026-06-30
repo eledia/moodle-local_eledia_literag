@@ -64,12 +64,14 @@ class token_validator {
             return null;
         }
 
-        // Defence in depth: a present elediamcp metadata row must not be revoked.
-        // (Revocation also deletes the core row, so the lookup above already
-        // fails for revoked tokens — this stays correct if that ever changes.)
-        $meta = $DB->get_record('webservice_elediamcp_token', ['tokenhash' => hash('sha256', $token)]);
-        if ($meta && !empty($meta->revoked)) {
-            return null;
+        // Defence in depth: when the optional elediamcp metadata table exists,
+        // a matching metadata row must not be revoked. local_literag also runs
+        // in isolation, so the connector table may be absent.
+        if ($DB->get_manager()->table_exists(new \xmldb_table('webservice_elediamcp_token'))) {
+            $meta = $DB->get_record('webservice_elediamcp_token', ['tokenhash' => hash('sha256', $token)]);
+            if ($meta && !empty($meta->revoked)) {
+                return null;
+            }
         }
 
         $user = \core_user::get_user((int) $tokenrow->userid);

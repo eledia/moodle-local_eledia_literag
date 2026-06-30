@@ -153,7 +153,15 @@ jobs:
 
       - name: Grunt (JS / SCSS)
         if: ${{ always() }}
-        run: moodle-plugin-ci grunt --moodle "$MOODLE_DIR" --max-lint-warnings=0 "$PLUGIN_DIR"
+        run: |
+          plugin_component="${PLUGIN_DIR#repo/public/}"
+          if [ -d "$MOODLE_DIR/public" ]; then
+            plugin_root="public/$plugin_component"
+          else
+            plugin_root="$plugin_component"
+          fi
+          cd "$MOODLE_DIR"
+          node_modules/.bin/grunt amd --root="$plugin_root" --max-lint-warnings=0
 
       - name: PHPDoc checks
         if: ${{ always() }}
