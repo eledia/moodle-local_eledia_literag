@@ -84,6 +84,21 @@ final class agent_test extends \advanced_testcase {
     }
 
     /**
+     * An OpenAI completion that requests one tool call with explicit arguments.
+     *
+     * @param string $toolname Tool name.
+     * @param array $arguments Tool arguments.
+     * @return array
+     */
+    private function llm_toolcall_with_args(string $toolname, array $arguments): array {
+        return ['status' => 200, 'error' => '', 'body' => json_encode(['choices' => [['message' => [
+            'role' => 'assistant', 'content' => null,
+            'tool_calls' => [['id' => 'call_1', 'type' => 'function',
+                'function' => ['name' => $toolname, 'arguments' => json_encode($arguments)]]],
+        ]]]])];
+    }
+
+    /**
      * An OpenAI completion that returns a final answer.
      *
      * @param string $text
@@ -226,6 +241,50 @@ final class agent_test extends \advanced_testcase {
         $this->assertNotNull($agent->pendingaction);
         $this->assertSame(42, $agent->pendingaction['arguments']['to_user_id']);
         $this->assertSame('I made this tutor.', $agent->pendingaction['arguments']['message']);
+    }
+
+    /**
+     * Any write tool that returns requires_confirmation is stored as a pending action.
+     */
+    public function test_generic_write_tool_preview_is_stored(): void {
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+
+        $args = [
+            'fullname' => 'Introduction to Statistics',
+            'shortname' => 'STAT101',
+            'category_id' => 1,
+            'confirm' => true,
+        ];
+        $toolcall = $this->llm_toolcall_with_args('moodle_create_course', $args);
+        $preview = ['status' => 200, 'error' => '', 'body' => json_encode(['jsonrpc' => '2.0', 'id' => 1, 'result' => [
+            'content' => [['type' => 'text', 'text' => 'preview']],
+            'structuredContent' => ['created' => false, 'requires_confirmation' => true,
+                'preview' => ['shortname' => 'STAT101'], 'summary' => 'Ready to create Moodle course STAT101.'],
+            'isError' => false,
+        ]])];
+
+        $mcpt = $this->queue_transport([$preview]);
+        $llmt = $this->queue_transport([$toolcall, $this->llm_answer('Soll ich den Kurs erstellen?')]);
+        $agent = new agent(
+            new client($llmt),
+            new moodle_client('https://x', 'tok', $mcpt),
+            null,
+            null,
+            ['moodle_create_course']
+        );
+
+        $agent->run(
+            [['role' => 'user', 'content' => 'create a statistics course']],
+            [['type' => 'function', 'function' => ['name' => 'moodle_create_course', 'parameters' => ['type' => 'object']]]]
+        );
+
+        $this->assertStringContainsString('"confirm":false', $mcpt->bodies[0]);
+        $this->assertNotNull($agent->pendingaction);
+        $this->assertSame('moodle_create_course', $agent->pendingaction['tool']);
+        $this->assertSame('Introduction to Statistics', $agent->pendingaction['arguments']['fullname']);
+        $this->assertSame('STAT101', $agent->pendingaction['arguments']['shortname']);
+        $this->assertArrayNotHasKey('confirm', $agent->pendingaction['arguments']);
     }
 
     /**

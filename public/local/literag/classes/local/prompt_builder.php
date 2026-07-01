@@ -137,11 +137,12 @@ class prompt_builder {
                 . 'guessing or relying only on the context below.';
         }
         if ($haswrites) {
-            $lines[] = 'To send a message you MUST call the moodle_send_message tool — never compose the preview '
-                . 'yourself. Call it with confirm left unset: the tool returns a preview WITHOUT sending. Relay that '
-                . 'preview (recipient + text) to the learner and ask them to confirm (e.g. reply "yes"); the actual '
-                . 'send happens only after they confirm. When you only know a name, pass it as to_query and the tool '
-                . 'resolves the recipient. NEVER state that a message was sent unless a tool result shows sent=true.';
+            $lines[] = 'For Moodle write actions (for example creating courses, enrolling users or sending messages), '
+                . 'you MUST call the relevant moodle_* tool first with confirm left unset. The tool returns a preview '
+                . 'WITHOUT changing Moodle. Relay the preview to the learner and ask for an explicit confirmation '
+                . '(for example reply "yes"). The actual write happens only after they confirm on the next turn. '
+                . 'NEVER state that a write action was completed unless a later tool result shows completion '
+                . '(for example created=true, updated=true, enrolled=true or sent=true).';
         }
 
         // Persona — voice only.

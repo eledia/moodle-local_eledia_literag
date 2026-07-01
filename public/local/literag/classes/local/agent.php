@@ -146,7 +146,7 @@ class agent {
         }
 
         // Write tools can only ever PREVIEW within a turn: force confirm off, no
-        // matter what the model set. The real send happens only after the learner
+        // matter what the model set. The real write happens only after the learner
         // confirms on a later turn (handled by tutor_chat via the pending action).
         $iswrite = in_array($name, $this->writetools, true);
         if ($iswrite) {
@@ -155,15 +155,23 @@ class agent {
 
         $result = $this->mcp->call_tool($name, $arguments);
 
-        // Record the previewed write, keyed on the recipient the server resolved
-        // (so the confirmed send goes exactly where the learner was shown).
+        // Record any previewed write action exactly as called, so the confirmed
+        // second call replays the same arguments with confirm=true. Older message
+        // sending previews did not expose the original recipient query reliably,
+        // so keep the resolved to_user_id special-case for that tool.
         if ($iswrite && !$result['iserror'] && is_array($result['structured'])) {
             $structured = $result['structured'];
             $recipientid = isset($structured['recipient']['id']) ? (int) $structured['recipient']['id'] : 0;
-            if ($recipientid > 0 && isset($arguments['message'])) {
+            if ($name === 'moodle_send_message' && $recipientid > 0 && isset($arguments['message'])) {
                 $this->pendingaction = [
                     'tool' => $name,
                     'arguments' => ['to_user_id' => $recipientid, 'message' => (string) $arguments['message']],
+                ];
+            } else if (!empty($structured['requires_confirmation'])) {
+                unset($arguments['confirm']);
+                $this->pendingaction = [
+                    'tool' => $name,
+                    'arguments' => $arguments,
                 ];
             }
         }

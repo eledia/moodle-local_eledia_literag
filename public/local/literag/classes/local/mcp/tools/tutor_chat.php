@@ -336,8 +336,8 @@ class tutor_chat implements tool {
 
         $summary = (is_array($result['structured']) && !empty($result['structured']['summary']))
             ? (string) $result['structured']['summary'] : '';
-        $sent = !$result['iserror'] && !empty($result['structured']['sent']);
-        if ($sent) {
+        $completed = !$result['iserror'] && $this->confirmed_action_completed($result['structured']);
+        if ($completed) {
             $note = 'You have just completed the learner\'s confirmed request: '
                 . ($summary !== '' ? $summary : 'done') . '. Confirm this to the learner in one short sentence.';
         } else {
@@ -352,12 +352,35 @@ class tutor_chat implements tool {
                 prompt_builder::build($note, [], $history, null, $userlang, $persona, false)
             );
         } catch (llm_exception $e) {
-            $answer = $sent ? get_string('confirm_sent', 'local_literag') : get_string('error_llm', 'local_literag');
+            $answer = $completed ? get_string('confirm_sent', 'local_literag') : get_string('error_llm', 'local_literag');
         }
 
         $this->repo->add_message($conversation, 'assistant', $answer, null, 0, []);
         $this->repo->touch($conversation, (string) $answerstyle);
         return result::tool($answer, ['answer' => $answer, 'conversation_id' => $conversation->convkey], false);
+    }
+
+    /**
+     * Whether a confirmed Moodle write tool result represents a completed action.
+     *
+     * Different elediamcp write tools use domain-specific flags (`sent`,
+     * `created`, `updated`, `enrolled`) but share `requires_confirmation=false`
+     * after the second call. Treat any of these success shapes as completed.
+     *
+     * @param mixed $structured Structured tool result.
+     * @return bool
+     */
+    private function confirmed_action_completed($structured): bool {
+        if (!is_array($structured)) {
+            return false;
+        }
+        foreach (['sent', 'created', 'updated', 'enrolled'] as $flag) {
+            if (!empty($structured[$flag])) {
+                return true;
+            }
+        }
+        return array_key_exists('requires_confirmation', $structured)
+            && empty($structured['requires_confirmation']);
     }
 
     /**

@@ -459,6 +459,51 @@ final class tutor_chat_test extends \advanced_testcase {
     }
 
     /**
+     * A confirmed generic Moodle write action is replayed with confirm=true.
+     */
+    public function test_confirmation_runs_pending_course_creation(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_write_tools', 1, 'local_literag');
+
+        $user = $this->getDataGenerator()->create_user();
+        $token = $this->mint_token((int) $user->id);
+        $repo = new conversation_repository();
+        $conv = $repo->create((int) $user->id, 0, 'explain');
+        $repo->set_pending_action($conv, ['tool' => 'moodle_create_course', 'arguments' => [
+            'fullname' => 'Introduction to Statistics',
+            'shortname' => 'STAT101',
+            'category_id' => 1,
+        ]]);
+
+        $createresult = json_encode(['jsonrpc' => '2.0', 'id' => 1, 'result' => [
+            'content' => [['type' => 'text', 'text' => 'created']],
+            'structuredContent' => ['created' => true, 'requires_confirmation' => false,
+                'course' => ['id' => 7, 'shortname' => 'STAT101'],
+                'summary' => 'Created Moodle course Introduction to Statistics (STAT101).'],
+            'isError' => false,
+        ]]);
+        $mcpt = $this->fake_json_transport($createresult);
+        $handler = new tutor_chat(
+            new client($this->fake_llm('Done — I created the course.')),
+            null,
+            new moodle_client('https://x', $token, $mcpt)
+        );
+
+        $result = $handler->handle(['system_url' => $CFG->wwwroot, 'moodle_token' => $token,
+            'user_message' => 'Ja!', 'conversation_id' => $conv->convkey]);
+
+        $this->assertFalse($result['isError']);
+        $this->assertSame('Done — I created the course.', $result['structuredContent']['answer']);
+        $this->assertStringContainsString('moodle_create_course', $mcpt->bodies[0]);
+        $this->assertStringContainsString('"confirm":true', $mcpt->bodies[0]);
+        $this->assertStringContainsString('STAT101', $mcpt->bodies[0]);
+        $reloaded = $repo->find_owned($conv->convkey, (int) $user->id);
+        $this->assertNull($repo->get_pending_action($reloaded));
+    }
+
+    /**
      * A non-affirmative reply abandons the pending send (nothing is sent, pending cleared).
      */
     public function test_non_affirmative_clears_pending(): void {
