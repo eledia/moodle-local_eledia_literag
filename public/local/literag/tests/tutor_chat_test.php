@@ -141,6 +141,7 @@ final class tutor_chat_test extends \advanced_testcase {
         $structured = $result['structuredContent'];
         $this->assertStringContainsString('glucose', $structured['answer']);
         $this->assertNotEmpty($structured['conversation_id']);
+        $this->assertSame('rag', $structured['answer_origin']);
         $this->assertNotEmpty($structured['sources']);
         $this->assertSame($url, $structured['sources'][0]['url']);
     }
@@ -276,7 +277,64 @@ final class tutor_chat_test extends \advanced_testcase {
         ]);
 
         $this->assertFalse($result['isError']);
+        $this->assertSame('general', $result['structuredContent']['answer_origin']);
         $this->assertArrayNotHasKey('sources', $result['structuredContent']);
+    }
+
+    /**
+     * The 'action' intent skips retrieval even in grounded mode: no sources,
+     * and the answer is never labelled 'rag' (tools would flip it to 'mcp').
+     */
+    public function test_action_intent_skips_retrieval(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag');
+
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $page = $gen->create_module('page', ['course' => $course->id]);
+        $student = $gen->create_and_enrol($course, 'student');
+        $this->insert_chunk((int) $course->id, (int) $page->cmid, $CFG->wwwroot . '/mod/page/view.php?id=' . $page->cmid);
+        $token = $this->mint_token((int) $student->id);
+        $handler = new tutor_chat(new client($this->fake_llm('I will create the course for you.')));
+
+        $result = $handler->handle([
+            'system_url' => $CFG->wwwroot, 'moodle_token' => $token,
+            'user_message' => 'Please create a course.',
+            'course_id' => (string) $course->id, 'intent' => 'action',
+        ]);
+
+        $this->assertFalse($result['isError']);
+        $this->assertNotSame('rag', $result['structuredContent']['answer_origin']);
+        $this->assertArrayNotHasKey('sources', $result['structuredContent']);
+    }
+
+    /**
+     * An unknown intent value falls back to 'auto' (current behaviour intact).
+     */
+    public function test_unknown_intent_behaves_like_auto(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        set_config('llm_api_key', 'test-key', 'local_literag');
+        set_config('enable_mcp_tools', 0, 'local_literag');
+
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $page = $gen->create_module('page', ['course' => $course->id]);
+        $student = $gen->create_and_enrol($course, 'student');
+        $this->insert_chunk((int) $course->id, (int) $page->cmid, $CFG->wwwroot . '/mod/page/view.php?id=' . $page->cmid);
+        $token = $this->mint_token((int) $student->id);
+        $handler = new tutor_chat(new client($this->fake_llm('Grounded answer. [S1]')));
+
+        $result = $handler->handle([
+            'system_url' => $CFG->wwwroot, 'moodle_token' => $token,
+            'user_message' => 'How does photosynthesis work?',
+            'course_id' => (string) $course->id, 'intent' => 'bogus',
+        ]);
+
+        $this->assertSame('rag', $result['structuredContent']['answer_origin']);
+        $this->assertNotEmpty($result['structuredContent']['sources']);
     }
 
     /**
@@ -480,7 +538,8 @@ final class tutor_chat_test extends \advanced_testcase {
         $createresult = json_encode(['jsonrpc' => '2.0', 'id' => 1, 'result' => [
             'content' => [['type' => 'text', 'text' => 'created']],
             'structuredContent' => ['created' => true, 'requires_confirmation' => false,
-                'course' => ['id' => 7, 'shortname' => 'STAT101'],
+                'course' => ['id' => 7, 'shortname' => 'STAT101',
+                    'url' => 'https://example.test/course/view.php?id=7'],
                 'summary' => 'Created Moodle course Introduction to Statistics (STAT101).'],
             'isError' => false,
         ]]);
@@ -495,7 +554,10 @@ final class tutor_chat_test extends \advanced_testcase {
             'user_message' => 'Ja!', 'conversation_id' => $conv->convkey]);
 
         $this->assertFalse($result['isError']);
-        $this->assertSame('Done — I created the course.', $result['structuredContent']['answer']);
+        $this->assertSame('mcp', $result['structuredContent']['answer_origin']);
+        $this->assertStringContainsString('Done — I created the course.', $result['structuredContent']['answer']);
+        $this->assertStringContainsString('[Kurs öffnen](https://example.test/course/view.php?id=7)',
+            $result['structuredContent']['answer']);
         $this->assertStringContainsString('moodle_create_course', $mcpt->bodies[0]);
         $this->assertStringContainsString('"confirm":true', $mcpt->bodies[0]);
         $this->assertStringContainsString('STAT101', $mcpt->bodies[0]);

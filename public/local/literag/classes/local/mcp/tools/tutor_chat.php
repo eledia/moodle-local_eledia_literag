@@ -106,6 +106,12 @@ class tutor_chat implements tool {
         $userlang = $userlang !== '' ? $userlang : null;
         $ragenabled = array_key_exists('rag_enabled', $arguments) ? (bool) $arguments['rag_enabled'] : true;
         $persona = (isset($arguments['persona']) && is_array($arguments['persona'])) ? $arguments['persona'] : null;
+        // Optional routing hint from the client (e.g. dashboard action pills):
+        // 'action' skips knowledge-base retrieval entirely (Moodle tools + LLM
+        // only, so the answer is never labelled 'rag'); 'knowledge' skips the
+        // Moodle tools (retrieval only); 'auto' (default) keeps both available.
+        $intent = in_array(($arguments['intent'] ?? ''), ['auto', 'action', 'knowledge'], true)
+            ? (string) $arguments['intent'] : 'auto';
 
         // Resolve / create the conversation (owner-scoped; unknown ids start fresh).
         $conversation = null;
@@ -143,10 +149,10 @@ class tutor_chat implements tool {
             }
         }
 
-        // Retrieval (skipped entirely in LLM-only mode).
+        // Retrieval (skipped entirely in LLM-only mode and for action intents).
         $contextchunks = [];
         $numcandidates = 0;
-        if ($ragenabled) {
+        if ($ragenabled && $intent !== 'action') {
             $courseids = $courseid > 0 ? [$courseid] : array_keys(enrol_get_users_courses($userid, true));
             $candidates = (new retriever())->candidates($message, $courseids, config::retrieval_candidates());
             $numcandidates = count($candidates);
@@ -177,7 +183,7 @@ class tutor_chat implements tool {
         $writetools = [];
         $mcp = null;
         $usersummary = null;
-        if ($ragenabled && config::enable_mcp_tools() && $systemurl !== '') {
+        if ($ragenabled && $intent !== 'knowledge' && config::enable_mcp_tools() && $systemurl !== '') {
             $mcp = $this->mcp ?? $this->moodle_client($systemurl, $moodletoken);
             // Bootstrap with a verified, LLM-ready summary of the learner.
             $verify = $mcp->call_tool('moodle_verify_user_context', $courseid > 0 ? ['course_id' => $courseid] : []);
@@ -213,19 +219,26 @@ class tutor_chat implements tool {
             $answerstyle,
             $userlang,
             $persona,
-            $ragenabled,
+            $ragenabled && $intent !== 'action',
             $usersummary,
             !empty($tools),
             !empty($writetools)
         );
 
+        $confirmation = null;
+        $answerorigin = !empty($sources) ? 'rag' : 'general';
         try {
             if (!empty($tools) && $mcp !== null) {
                 $agentrunner = new agent($this->client(), $mcp, null, null, $writetools);
                 $answer = $agentrunner->run($messages, $tools);
+                if (!empty($agentrunner->usedtools)) {
+                    $answerorigin = 'mcp';
+                }
                 // A write previewed this turn awaits the learner's confirmation next turn.
                 if ($agentrunner->pendingaction !== null) {
                     $this->repo->set_pending_action($conversation, $agentrunner->pendingaction);
+                    $confirmation = $this->confirmation_payload();
+                    $answerorigin = 'mcp';
                 }
             } else {
                 $answer = $this->client()->chat($messages);
@@ -259,12 +272,16 @@ class tutor_chat implements tool {
         $structured = [
             'answer' => $answer,
             'conversation_id' => $conversation->convkey,
+            'answer_origin' => $answerorigin,
         ];
         if (!empty($sources)) {
             $structured['sources'] = $sources;
         }
         if ($topic !== null && $topic !== '') {
             $structured['topic'] = $topic;
+        }
+        if ($confirmation !== null) {
+            $structured['confirmation'] = $confirmation;
         }
 
         return result::tool($answer, $structured, false);
@@ -354,10 +371,54 @@ class tutor_chat implements tool {
         } catch (llm_exception $e) {
             $answer = $completed ? get_string('confirm_sent', 'local_literag') : get_string('error_llm', 'local_literag');
         }
+        if ($completed) {
+            $answer = $this->append_action_link($answer, $result['structured']);
+        }
 
         $this->repo->add_message($conversation, 'assistant', $answer, null, 0, []);
         $this->repo->touch($conversation, (string) $answerstyle);
-        return result::tool($answer, ['answer' => $answer, 'conversation_id' => $conversation->convkey], false);
+        return result::tool($answer, [
+            'answer' => $answer,
+            'conversation_id' => $conversation->convkey,
+            'answer_origin' => 'mcp',
+        ], false);
+    }
+
+    /**
+     * Structured confirmation controls for chat UIs that can render buttons.
+     *
+     * @return array{required: bool, yeslabel: string, nolabel: string, yesmessage: string, nomessage: string}
+     */
+    private function confirmation_payload(): array {
+        return [
+            'required' => true,
+            'yeslabel' => 'Ja',
+            'nolabel' => 'Nein',
+            'yesmessage' => 'Ja',
+            'nomessage' => 'Nein',
+        ];
+    }
+
+    /**
+     * Append deterministic action links that should not depend on LLM wording.
+     *
+     * @param string $answer Renderable Markdown answer.
+     * @param mixed $structured Structured Moodle tool result.
+     * @return string Answer with any missing action link appended.
+     */
+    private function append_action_link(string $answer, $structured): string {
+        if (!is_array($structured)) {
+            return $answer;
+        }
+        $course = is_array($structured['course'] ?? null) ? $structured['course'] : null;
+        if ($course === null || empty($course['url'])) {
+            return $answer;
+        }
+        $url = clean_param((string) $course['url'], PARAM_URL);
+        if ($url === '' || strpos($answer, $url) !== false) {
+            return $answer;
+        }
+        return trim($answer) . "\n\n" . '[Kurs öffnen](' . $url . ')';
     }
 
     /**

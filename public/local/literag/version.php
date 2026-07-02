@@ -24,9 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026061901;
+$plugin->version   = 2026070201;
 $plugin->requires  = 2024100700;
 $plugin->supported = [405, 501];
 $plugin->component = 'local_literag';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.5.1';
+$plugin->release   = '0.5.2';

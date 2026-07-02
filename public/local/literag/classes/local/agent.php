@@ -54,6 +54,9 @@ class agent {
     /** @var array|null A write previewed this turn, awaiting the learner's confirmation. */
     public ?array $pendingaction = null;
 
+    /** @var string[] Moodle MCP tools called during this run. */
+    public array $usedtools = [];
+
     /**
      * Constructor.
      *
@@ -154,6 +157,9 @@ class agent {
         }
 
         $result = $this->mcp->call_tool($name, $arguments);
+        if ($name !== '') {
+            $this->usedtools[] = $name;
+        }
 
         // Record any previewed write action exactly as called, so the confirmed
         // second call replays the same arguments with confirm=true. Older message
